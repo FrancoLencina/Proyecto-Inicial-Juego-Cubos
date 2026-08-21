@@ -52,6 +52,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5633586749725949782, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
+      propertyPath: m_Name
+      value: AppleBlock
+      objectReference: {fileID: 0}
+    - target: {fileID: 6471829693050997372, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 33fdf750f4ceb454ba2dcc63d33614ed, type: 2}
     - target: {fileID: 8926107005786171915, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
