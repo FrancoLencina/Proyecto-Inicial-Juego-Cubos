@@ -1,12 +1,16 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
     public float speed = 5f;
+    public float jumpForce = 7f;
+    public float gravityMultiplier = 2f;
 
     private Rigidbody rb;
     private Vector3 movement;
+    private bool isGrounded;
 
     void Start()
     {
@@ -31,12 +35,39 @@ public class PlayerMovement : MonoBehaviour
             vertical = 1f;
 
         movement = new Vector3(horizontal, 0f, vertical).normalized;
+
+        // Salto
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            isGrounded = false;
+        }
     }
 
     void FixedUpdate()
     {
-        rb.MovePosition(
-            rb.position + movement * speed * Time.fixedDeltaTime
-        );
+        Vector3 velocity = rb.linearVelocity;
+
+        velocity.x = movement.x * speed;
+        velocity.z = movement.z * speed;
+
+        rb.linearVelocity = velocity;
+
+         // Gravedad adicional
+        if (!isGrounded)
+        {
+            rb.AddForce(
+                Physics.gravity * (gravityMultiplier - 1f),
+                ForceMode.Acceleration
+            );
+        }
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
+        }
     }
 }
