@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &6573031593091329278
+--- !u!1001 &2915924269256634221
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3056691416621820801, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
       propertyPath: m_Name
-      value: BananaBlock
+      value: OrangeBlock
       objectReference: {fileID: 0}
     - target: {fileID: 4853403521022087032, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -55,7 +55,7 @@ PrefabInstance:
     - target: {fileID: 8926107005786171915, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 78c39e25f1421864b916e76983422599, type: 2}
+      objectReference: {fileID: 2100000, guid: f5d6cdb0803d05c40aa4ca054c4d6851, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
