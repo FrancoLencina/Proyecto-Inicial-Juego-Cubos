@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2818189186982105544}
   - component: {fileID: 3333670635106067005}
   m_Layer: 0
-  m_Name: FruitBlock
+  m_Name: BananaBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
