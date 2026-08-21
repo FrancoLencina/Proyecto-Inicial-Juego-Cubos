@@ -8,12 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+<<<<<<< Updated upstream
   - component: {fileID: 8196901951397452558}
   - component: {fileID: 4880158007945456498}
   - component: {fileID: 7427500568765462445}
   - component: {fileID: 2818189186982105544}
   - component: {fileID: 3333670635106067005}
   m_Layer: 0
+=======
+  - component: {fileID: 4853403521022087032}
+  - component: {fileID: 4638271925827022484}
+  - component: {fileID: 8926107005786171915}
+  - component: {fileID: 5256542222640191561}
+  - component: {fileID: 1417686621101228276}
+  - component: {fileID: 3781962132761216918}
+  m_Layer: 6
+>>>>>>> Stashed changes
   m_Name: FruitBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -140,3 +150,15 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &3781962132761216918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3056691416621820801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a36d3b5ba9aaeb4f9478e57ae7d28e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
