@@ -60,6 +60,14 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 78c39e25f1421864b916e76983422599, type: 2}
+    - target: {fileID: 8360295038724316874, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
+      propertyPath: fruitData
+      value: 
+      objectReference: {fileID: 11400000, guid: a1f4f81ff03a91d44bb69656a1f4220a, type: 2}
+    - target: {fileID: 8360295038724316874, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
+      propertyPath: fruitType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8926107005786171915, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

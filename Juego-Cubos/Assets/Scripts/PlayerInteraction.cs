@@ -27,7 +27,7 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 5f, fruitBlockLayer))
         {
-            Debug.Log("Estoy mirando un FruitBlock: " + hit.collider.gameObject.name);
+            //Debug.Log("Estoy mirando un FruitBlock: " + hit.collider.gameObject.name);
 
             if (Keyboard.current.eKey.wasPressedThisFrame)
             {

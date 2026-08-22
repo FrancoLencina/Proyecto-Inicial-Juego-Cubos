@@ -1,0 +1,23 @@
+public enum FruitType
+{
+    Apple,
+    Banana,
+    Anana,
+    Orange,
+    Grape,
+    Strawberry,
+    Watermelon,
+    Pineapple,
+    Mango,
+    Peach,
+    Pear,
+    Carrot,
+    Potato,
+    Tomato,
+    Lettuce,
+    Broccoli,
+    Cucumber,
+    Spinach,
+    Onion,
+    Corn
+}
