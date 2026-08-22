@@ -3,21 +3,23 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Movement")]
     public float speed = 5f;
-    public float jumpForce = 7f;
 
-    [Header("Rotation")]
-    public float rotationSpeed = 180f;
-
-    [Header("Air Control")]
-    public float airControl = 0.25f;
+    [Header("Jump")]
+    public float jumpForce = 5f;
+    public float jumpHoldForce = 15f;
+    public float maxJumpTime = 0.4f;
 
     [Header("Gravity")]
     public float gravityMultiplier = 2f;
 
     private Rigidbody rb;
     private Vector3 movement;
+
     private bool isGrounded;
+    private bool isJumping;
+    private float jumpTime;
 
     void Start()
     {
@@ -29,49 +31,39 @@ public class PlayerMovement : MonoBehaviour
         float horizontal = 0f;
         float vertical = 0f;
 
-        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
+        if (Keyboard.current.aKey.isPressed)
             horizontal = -1f;
 
-        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
+        if (Keyboard.current.dKey.isPressed)
             horizontal = 1f;
 
-        if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed)
-            vertical = -1f;
-
-        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed)
+        if (Keyboard.current.wKey.isPressed)
             vertical = 1f;
 
-        if (isGrounded)
-        {
-            // A/D rotan al personaje
-            if (horizontal != 0f)
-            {
-                transform.Rotate(
-                    Vector3.up * horizontal * rotationSpeed * Time.deltaTime
-                );
-            }
+        if (Keyboard.current.sKey.isPressed)
+            vertical = -1f;
 
-            // W/S mueven al personaje según su frente
-            movement = transform.forward * vertical;
-        }
-        else
-        {
-            // En el aire A/D mueven lateralmente
-            Vector3 forward = transform.forward;
-            Vector3 right = transform.right;
+        // Movimiento relativo a la rotación del personaje
+        movement =
+            transform.right * horizontal +
+            transform.forward * vertical;
 
-            movement =
-                (forward * vertical) +
-                (right * horizontal);
+        movement.Normalize();
 
-            movement.Normalize();
-        }
-
-        // Salto
+        // Comenzar salto
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+
             isGrounded = false;
+            isJumping = true;
+            jumpTime = 0f;
+        }
+
+        // Soltar espacio
+        if (Keyboard.current.spaceKey.wasReleasedThisFrame)
+        {
+            isJumping = false;
         }
     }
 
@@ -79,22 +71,31 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 velocity = rb.linearVelocity;
 
-        if (isGrounded)
-        {
-            // Movimiento normal en el suelo
-            velocity.x = movement.x * speed;
-            velocity.z = movement.z * speed;
-        }
-        else
-        {
-            // Control reducido en el aire
-            velocity.x += movement.x * speed * airControl * Time.fixedDeltaTime;
-            velocity.z += movement.z * speed * airControl * Time.fixedDeltaTime;
-        }
+        // Movimiento horizontal
+        velocity.x = movement.x * speed;
+        velocity.z = movement.z * speed;
 
         rb.linearVelocity = velocity;
 
-        // Gravedad adicional
+        // Salto variable
+        if (isJumping && Keyboard.current.spaceKey.isPressed)
+        {
+            if (jumpTime < maxJumpTime)
+            {
+                rb.AddForce(
+                    Vector3.up * jumpHoldForce,
+                    ForceMode.Acceleration
+                );
+
+                jumpTime += Time.fixedDeltaTime;
+            }
+            else
+            {
+                isJumping = false;
+            }
+        }
+
+        // Gravedad
         if (!isGrounded)
         {
             rb.AddForce(
@@ -109,6 +110,15 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
+            isJumping = false;
+        }
+    }
+
+    void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
         }
     }
 }

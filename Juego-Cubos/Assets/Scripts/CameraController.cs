@@ -1,48 +1,81 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CameraController : MonoBehaviour
+public class PlayerCamera : MonoBehaviour
 {
     public Transform player;
 
-    [Header("Camera Settings")]
-    public float sensitivity = 2f;
+    [Header("Camera")]
     public float distance = 5f;
     public float height = 2f;
+    public float verticalAngle = 15f;
 
-    [Header("Vertical Limits")]
+    [Header("Mouse")]
+    public float sensitivity = 2f;
+
+    [Header("Vertical Rotation")]
     public float minVerticalAngle = -30f;
     public float maxVerticalAngle = 60f;
 
-    private float horizontalRotation = 0f;
-    private float verticalRotation = 15f;
+    private float currentVerticalRotation;
+
+    void Start()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        currentVerticalRotation = verticalAngle;
+    }
 
     void LateUpdate()
     {
-        if (Mouse.current == null)
+        if (Mouse.current == null || player == null)
             return;
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-        horizontalRotation += mouseDelta.x * sensitivity;
-        verticalRotation -= mouseDelta.y * sensitivity;
+        // Rotación horizontal del personaje
+        player.Rotate(
+            Vector3.up * mouseDelta.x * sensitivity
+        );
 
-        verticalRotation = Mathf.Clamp(
-            verticalRotation,
+        // Rotación vertical de la cámara
+        currentVerticalRotation -= mouseDelta.y * sensitivity;
+
+        currentVerticalRotation = Mathf.Clamp(
+            currentVerticalRotation,
             minVerticalAngle,
             maxVerticalAngle
         );
 
-        Quaternion rotation = Quaternion.Euler(
-            verticalRotation,
-            horizontalRotation,
+        UpdateCameraPosition();
+    }
+
+    void UpdateCameraPosition()
+    {
+        // Inclinación vertical de la cámara
+        Quaternion verticalRotation = Quaternion.Euler(
+            currentVerticalRotation,
+            0f,
             0f
         );
 
-        Vector3 offset = rotation * new Vector3(0f, 0f, -distance);
+        // Distancia de la cámara respecto al jugador
+        Vector3 offset =
+            player.rotation *
+            verticalRotation *
+            new Vector3(0f, 0f, -distance);
 
-        transform.position = player.position + Vector3.up * height + offset;
+        // Posición final
+        transform.position =
+            player.position +
+            Vector3.up * height +
+            offset;
 
-        transform.LookAt(player.position + Vector3.up * height);
+        // La cámara mira hacia el jugador
+        transform.LookAt(
+            player.position +
+            Vector3.up * height
+        );
     }
 }
