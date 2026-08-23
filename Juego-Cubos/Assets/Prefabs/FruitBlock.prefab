@@ -1,6 +1,10 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+<<<<<<< Updated upstream
 --- !u!1 &1343157657997598281
+=======
+--- !u!1 &6018408794896535228
+>>>>>>> Stashed changes
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,6 +12,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
   - component: {fileID: 8196901951397452558}
   - component: {fileID: 4880158007945456498}
@@ -22,6 +27,14 @@ GameObject:
   - component: {fileID: 5256542222640191561}
   - component: {fileID: 1417686621101228276}
   - component: {fileID: 3781962132761216918}
+=======
+  - component: {fileID: 2260375731222292414}
+  - component: {fileID: 1794472779616305714}
+  - component: {fileID: 2355343027524229501}
+  - component: {fileID: 4538389439748996633}
+  - component: {fileID: 3931335569680782018}
+  - component: {fileID: 8754657069308710072}
+>>>>>>> Stashed changes
   m_Layer: 6
 >>>>>>> Stashed changes
   m_Name: FruitBlock
@@ -30,36 +43,61 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+<<<<<<< Updated upstream
 --- !u!4 &8196901951397452558
+=======
+--- !u!4 &2260375731222292414
+>>>>>>> Stashed changes
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_GameObject: {fileID: 1343157657997598281}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.81, y: 4, z: 7.47}
+=======
+  m_GameObject: {fileID: 6018408794896535228}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.87719, y: 1.97, z: -1.09}
+>>>>>>> Stashed changes
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+<<<<<<< Updated upstream
 --- !u!33 &4880158007945456498
+=======
+--- !u!33 &1794472779616305714
+>>>>>>> Stashed changes
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_GameObject: {fileID: 1343157657997598281}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!23 &7427500568765462445
+=======
+  m_GameObject: {fileID: 6018408794896535228}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &2355343027524229501
+>>>>>>> Stashed changes
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_GameObject: {fileID: 1343157657997598281}
+=======
+  m_GameObject: {fileID: 6018408794896535228}
+>>>>>>> Stashed changes
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -78,7 +116,11 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
+<<<<<<< Updated upstream
   - {fileID: 2100000, guid: 78c39e25f1421864b916e76983422599, type: 2}
+=======
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+>>>>>>> Stashed changes
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -102,13 +144,21 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+<<<<<<< Updated upstream
 --- !u!65 &2818189186982105544
+=======
+--- !u!65 &4538389439748996633
+>>>>>>> Stashed changes
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_GameObject: {fileID: 1343157657997598281}
+=======
+  m_GameObject: {fileID: 6018408794896535228}
+>>>>>>> Stashed changes
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -123,13 +173,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+<<<<<<< Updated upstream
 --- !u!54 &3333670635106067005
+=======
+--- !u!54 &3931335569680782018
+>>>>>>> Stashed changes
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_GameObject: {fileID: 1343157657997598281}
+=======
+  m_GameObject: {fileID: 6018408794896535228}
+>>>>>>> Stashed changes
   serializedVersion: 5
   m_Mass: 12
   m_LinearDamping: 0
@@ -150,15 +208,28 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+<<<<<<< Updated upstream
 --- !u!114 &3781962132761216918
+=======
+--- !u!114 &8754657069308710072
+>>>>>>> Stashed changes
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_GameObject: {fileID: 3056691416621820801}
+=======
+  m_GameObject: {fileID: 6018408794896535228}
+>>>>>>> Stashed changes
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4a36d3b5ba9aaeb4f9478e57ae7d28e0, type: 3}
   m_Name: 
+<<<<<<< Updated upstream
   m_EditorClassIdentifier: '::'
+=======
+  m_EditorClassIdentifier: Assembly-CSharp::FruitBlock
+  fruitData: {fileID: 11400000, guid: a1f4f81ff03a91d44bb69656a1f4220a, type: 2}
+>>>>>>> Stashed changes
