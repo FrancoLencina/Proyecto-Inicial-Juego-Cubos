@@ -15,3 +15,4 @@ MonoBehaviour:
   fruitType: 4
   displayName: Grape
   image: {fileID: 21300000, guid: d85896d9a46770e4a963960a734260f0, type: 3}
+  material: {fileID: 2100000, guid: f07eb6c31351dec47a81f30ffd348dca, type: 2}

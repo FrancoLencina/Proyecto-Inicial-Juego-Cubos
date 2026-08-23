@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3483586974143652804
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6441636194702000339}
+  - component: {fileID: 1465126190287593804}
+  m_Layer: 0
+  m_Name: BlockSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6441636194702000339
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3483586974143652804}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.82552, y: 0, z: -16.23445}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1465126190287593804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3483586974143652804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b77bedb1488170349a1451669b41ba45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlockSpawner
+  fruitBlockPrefab: {fileID: 4827448107584641408, guid: 8f2b0e8e3d25b9c498156cd6bf9fec9d, type: 3}
+  availableFruits:
+  - {fileID: 11400000, guid: c3415e7461915d8419fcc50c6b22e234, type: 2}
+  - {fileID: 11400000, guid: a1f4f81ff03a91d44bb69656a1f4220a, type: 2}
+  - {fileID: 11400000, guid: 86ebe3791e617c24093e932870887366, type: 2}
+  - {fileID: 11400000, guid: 6126c2811ca4d924f9ccbdcc1cd7faa4, type: 2}
+  - {fileID: 11400000, guid: 6c5045ec63f68e84dad183c4a44fa898, type: 2}
+  blocksPerFruit: 2
+  spawnArea: {fileID: 0}

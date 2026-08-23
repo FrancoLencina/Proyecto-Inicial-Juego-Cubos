@@ -15,3 +15,4 @@ MonoBehaviour:
   fruitType: 7
   displayName: Pineapple
   image: {fileID: 21300000, guid: 9f94ff4d9b12e5f4fb183618e7bb0173, type: 3}
+  material: {fileID: 2100000, guid: 36da1233696f38c41935d7c43e6f8907, type: 2}

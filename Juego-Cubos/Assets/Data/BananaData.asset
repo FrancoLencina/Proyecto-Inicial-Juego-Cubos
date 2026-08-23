@@ -15,3 +15,4 @@ MonoBehaviour:
   fruitType: 1
   displayName: Banana
   image: {fileID: 21300000, guid: 9f9dc3b71efe7d84d8b553852a302479, type: 3}
+  material: {fileID: 2100000, guid: 78c39e25f1421864b916e76983422599, type: 2}
