@@ -254,7 +254,7 @@ MonoBehaviour:
   maxJumpTime: 0.6
   groundLayer:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 448
   groundCheckHeight: 0
   groundCheckRadius: 0.25
   groundCheckDistance: 1

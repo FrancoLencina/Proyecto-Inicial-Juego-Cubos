@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class TargetZone : MonoBehaviour
 {
+    [SerializeField] private GameManager gameManager;
+    [SerializeField] private LayerMask validBlockLayer;
+
     private List<FruitBlock> fruitBlocksInside = new List<FruitBlock>();
+    private bool stackWasCorrect = false;
 
     private void Update()
     {
@@ -27,6 +31,15 @@ public class TargetZone : MonoBehaviour
                 Debug.Log("FruitBlock salió de la zona: " + fruitBlock.FruitData.DisplayName);
             }
         }
+
+        bool stackIsCorrect = IsCorrectStack();
+
+        if (stackIsCorrect && !stackWasCorrect)
+        {
+            Debug.Log("¡Apilamiento correcto!");
+        }
+
+        stackWasCorrect = stackIsCorrect;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -58,5 +71,40 @@ public class TargetZone : MonoBehaviour
         return fruitBlocksInside
             .OrderBy(block => block.transform.position.y)
             .ToList();
+    }
+
+    private bool IsCorrectStack()
+    {
+        List<FruitBlock> orderedBlocks = GetBlocksOrderedByHeight();
+
+        if (gameManager == null || gameManager.TargetSequence == null)
+        {
+            return false;
+        }
+
+        if (orderedBlocks.Count != gameManager.TargetSequence.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < orderedBlocks.Count; i++)
+        {
+            FruitBlock block = orderedBlocks[i];
+
+            if (((1 << block.gameObject.layer) & validBlockLayer) == 0)
+            {
+                return false;
+            }
+
+            FruitType blockFruitType = block.FruitData.FruitType;
+            FruitType targetFruitType = gameManager.TargetSequence[i].FruitType;
+
+            if (blockFruitType != targetFruitType)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

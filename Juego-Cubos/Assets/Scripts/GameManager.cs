@@ -9,6 +9,8 @@ public class GameManager : MonoBehaviour
 
     private List<FruitData> targetSequence;
 
+    public IReadOnlyList<FruitData> TargetSequence => targetSequence;
+
     private void Start()
     {
         GenerateSequence();

@@ -104,12 +104,12 @@ public class PlayerInteraction : MonoBehaviour
 
         collisionNormal = normal.normalized;
 
-        Debug.Log(
-            "FruitBlock colisionando con: "
-            + collision.gameObject.name
-            + " | Normal: "
-            + collisionNormal
-        );
+        //Debug.Log(
+        //    "FruitBlock colisionando con: "
+        //    + collision.gameObject.name
+        //    + " | Normal: "
+        //    + collisionNormal
+        //);
     }
 
     private void OnCollisionExit(Collision collision)
