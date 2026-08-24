@@ -8,6 +8,8 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Jump")]
     public float jumpForce = 5f;
+    public float jumpHoldForce = 15f;
+    public float maxJumpTime = 0.4f;
 
     [Header("Ground Detection")]
     public LayerMask groundLayer;
@@ -19,6 +21,10 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 movement;
 
     private bool isGrounded;
+
+    // Salto variable
+    private bool isJumping;
+    private float jumpTime;
 
     // Normal de la superficie vertical que estamos tocando
     private Vector3 wallNormal;
@@ -40,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         // =========================
-        // INPUT
+        // INPUT DE MOVIMIENTO
         // =========================
 
         float horizontal = 0f;
@@ -72,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         // =========================
-        // SALTO
+        // COMENZAR SALTO
         // =========================
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
@@ -83,6 +89,18 @@ public class PlayerMovement : MonoBehaviour
             );
 
             isGrounded = false;
+            isJumping = true;
+            jumpTime = 0f;
+        }
+
+
+        // =========================
+        // SOLTAR ESPACIO
+        // =========================
+
+        if (Keyboard.current.spaceKey.wasReleasedThisFrame)
+        {
+            isJumping = false;
         }
     }
 
@@ -128,7 +146,30 @@ public class PlayerMovement : MonoBehaviour
 
 
         // =========================
-        // LIMPIAR NORMAL
+        // SALTO VARIABLE
+        // =========================
+
+        if (isJumping && Keyboard.current.spaceKey.isPressed)
+        {
+            if (jumpTime < maxJumpTime)
+            {
+                rb.AddForce(
+                    Vector3.up * jumpHoldForce,
+                    ForceMode.Acceleration
+                );
+
+                jumpTime += Time.fixedDeltaTime;
+            }
+            else
+            {
+                // Llegó al tiempo máximo
+                isJumping = false;
+            }
+        }
+
+
+        // =========================
+        // LIMPIAR NORMAL DE PARED
         // =========================
 
         wallNormal = Vector3.zero;
@@ -158,6 +199,14 @@ public class PlayerMovement : MonoBehaviour
         );
 
 
+        // Una superficie con normal Y alta es suelo.
+        //
+        // Suelo:
+        // normal.y ≈ 1
+        //
+        // Pared:
+        // normal.y ≈ 0
+
         if (detected && hit.normal.y > 0.5f)
         {
             isGrounded = true;
@@ -170,7 +219,7 @@ public class PlayerMovement : MonoBehaviour
 
 
     // =====================================================
-    // COLISIONES
+    // DETECCIÓN DE PAREDES
     // =====================================================
 
     void OnCollisionStay(Collision collision)
@@ -180,7 +229,9 @@ public class PlayerMovement : MonoBehaviour
             Vector3 normal = contact.normal;
 
 
-            // Superficie vertical
+            // Si la normal tiene poco componente Y,
+            // estamos tocando una superficie vertical.
+
             if (normal.y < 0.5f)
             {
                 wallNormal = normal;
@@ -190,7 +241,7 @@ public class PlayerMovement : MonoBehaviour
 
 
     // =====================================================
-    // VISUALIZACIÓN
+    // VISUALIZACIÓN DEL SPHERECAST
     // =====================================================
 
     void OnDrawGizmosSelected()
@@ -212,6 +263,10 @@ public class PlayerMovement : MonoBehaviour
         );
 
 
+        // =========================
+        // COLOR
+        // =========================
+
         if (detected && hit.normal.y > 0.5f)
         {
             Gizmos.color = Color.green;
@@ -226,19 +281,38 @@ public class PlayerMovement : MonoBehaviour
         }
 
 
+        // =========================
+        // ESFERA INICIAL
+        // =========================
+
         Gizmos.DrawWireSphere(
             origin,
             groundCheckRadius
         );
 
+
+        // =========================
+        // ESFERA FINAL
+        // =========================
+
+        Vector3 end =
+            origin +
+            Vector3.down *
+            groundCheckDistance;
+
         Gizmos.DrawWireSphere(
-            origin + Vector3.down * groundCheckDistance,
+            end,
             groundCheckRadius
         );
+
+
+        // =========================
+        // RECORRIDO
+        // =========================
 
         Gizmos.DrawLine(
             origin,
-            origin + Vector3.down * groundCheckDistance
+            end
         );
     }
 }
