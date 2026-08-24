@@ -14843,10 +14843,19 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6070869279838661611, guid: 2f8662662be4b814285b1a8ccb7a1f52, type: 3}
+      propertyPath: jumpForce
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6070869279838661611, guid: 2f8662662be4b814285b1a8ccb7a1f52, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 256
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 6547293724145205491, guid: 2f8662662be4b814285b1a8ccb7a1f52, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 6547293724145205491, guid: 2f8662662be4b814285b1a8ccb7a1f52, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

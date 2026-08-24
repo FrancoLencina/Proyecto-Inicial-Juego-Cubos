@@ -20,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isGrounded;
 
-    // Normal de la pared que estamos tocando
+    // Normal de la superficie vertical que estamos tocando
     private Vector3 wallNormal;
 
 
@@ -33,14 +33,14 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         // =========================
-        // GROUND CHECK
+        // DETECTAR SUELO
         // =========================
 
         CheckGround();
 
 
         // =========================
-        // MOVIMIENTO
+        // INPUT
         // =========================
 
         float horizontal = 0f;
@@ -59,10 +59,13 @@ public class PlayerMovement : MonoBehaviour
             vertical = -1f;
 
 
+        // =========================
+        // MOVIMIENTO RELATIVO AL PLAYER
+        // =========================
+
         movement =
             transform.right * horizontal +
             transform.forward * vertical;
-
 
         if (movement.magnitude > 1f)
             movement.Normalize();
@@ -86,38 +89,48 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Movimiento que vamos a aplicar
-        Vector3 finalMovement = movement;
+        // =========================
+        // VELOCIDAD ACTUAL
+        // =========================
+
+        Vector3 velocity = rb.linearVelocity;
 
 
         // =========================
-        // EVITAR PEGARSE A PAREDES
+        // MOVIMIENTO DESEADO
+        // =========================
+
+        Vector3 desiredVelocity =
+            movement * speed;
+
+
+        // =========================
+        // EVITAR EMPUJAR CONTRA PAREDES
         // =========================
 
         if (wallNormal != Vector3.zero)
         {
-            finalMovement = Vector3.ProjectOnPlane(
-                finalMovement,
+            desiredVelocity = Vector3.ProjectOnPlane(
+                desiredVelocity,
                 wallNormal
             );
         }
 
 
         // =========================
-        // MOVIMIENTO FÍSICO
+        // APLICAR MOVIMIENTO
         // =========================
 
-        Vector3 movementAmount =
-            finalMovement *
-            speed *
-            Time.fixedDeltaTime;
+        velocity.x = desiredVelocity.x;
+        velocity.z = desiredVelocity.z;
 
-        rb.MovePosition(
-            rb.position + movementAmount
-        );
+        rb.linearVelocity = velocity;
 
 
-        // Limpiamos la normal para el siguiente FixedUpdate
+        // =========================
+        // LIMPIAR NORMAL
+        // =========================
+
         wallNormal = Vector3.zero;
     }
 
@@ -134,7 +147,6 @@ public class PlayerMovement : MonoBehaviour
 
         RaycastHit hit;
 
-
         bool detected = Physics.SphereCast(
             origin,
             groundCheckRadius,
@@ -145,10 +157,6 @@ public class PlayerMovement : MonoBehaviour
             QueryTriggerInteraction.Ignore
         );
 
-
-        // La superficie debe ser suficientemente horizontal.
-        // Una pared tiene aproximadamente normal.y = 0.
-        // Un suelo tiene normal.y = 1.
 
         if (detected && hit.normal.y > 0.5f)
         {
@@ -162,27 +170,27 @@ public class PlayerMovement : MonoBehaviour
 
 
     // =====================================================
-    // DETECCIÓN DE PAREDES
+    // COLISIONES
     // =====================================================
 
     void OnCollisionStay(Collision collision)
     {
         foreach (ContactPoint contact in collision.contacts)
         {
-            // Si la normal tiene poco componente Y,
-            // estamos tocando una superficie vertical/inclinada.
+            Vector3 normal = contact.normal;
 
-            if (contact.normal.y < 0.5f)
+
+            // Superficie vertical
+            if (normal.y < 0.5f)
             {
-                wallNormal = contact.normal;
-                break;
+                wallNormal = normal;
             }
         }
     }
 
 
     // =====================================================
-    // VISUALIZACIÓN DEL SPHERECAST
+    // VISUALIZACIÓN
     // =====================================================
 
     void OnDrawGizmosSelected()
@@ -191,9 +199,7 @@ public class PlayerMovement : MonoBehaviour
             transform.position +
             Vector3.up * groundCheckHeight;
 
-
         RaycastHit hit;
-
 
         bool detected = Physics.SphereCast(
             origin,
@@ -220,30 +226,19 @@ public class PlayerMovement : MonoBehaviour
         }
 
 
-        // Esfera inicial
         Gizmos.DrawWireSphere(
             origin,
             groundCheckRadius
         );
 
-
-        // Esfera final
-        Vector3 end =
-            origin +
-            Vector3.down *
-            groundCheckDistance;
-
-
         Gizmos.DrawWireSphere(
-            end,
+            origin + Vector3.down * groundCheckDistance,
             groundCheckRadius
         );
 
-
-        // Recorrido
         Gizmos.DrawLine(
             origin,
-            end
+            origin + Vector3.down * groundCheckDistance
         );
     }
 }
