@@ -51,5 +51,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 86ebe3791e617c24093e932870887366, type: 2}
   - {fileID: 11400000, guid: 6126c2811ca4d924f9ccbdcc1cd7faa4, type: 2}
   - {fileID: 11400000, guid: 6c5045ec63f68e84dad183c4a44fa898, type: 2}
+  - {fileID: 11400000, guid: da26d8cc573971b4a8c24e76247ef367, type: 2}
+  - {fileID: 11400000, guid: 813c2aadf2c651646a0d5eca610aa0da, type: 2}
+  - {fileID: 11400000, guid: da34fbbc5b38bd24d8ad5e8917500dc8, type: 2}
+  - {fileID: 11400000, guid: 0c893ddb3d531c641b24c55cf041bbfb, type: 2}
+  - {fileID: 11400000, guid: 1b07e022d2a642243a4b4dae8173d7c1, type: 2}
+  - {fileID: 11400000, guid: 38b7a81a9d93a134fa322ecc28e81dae, type: 2}
+  - {fileID: 11400000, guid: 7979f26bd6c284d4ba8e674e5df0f8c8, type: 2}
+  - {fileID: 11400000, guid: e6b371043d09d6d4b98fd40baf985964, type: 2}
+  - {fileID: 11400000, guid: cffde1b8ca2d22246b65cb3922a7ed97, type: 2}
+  - {fileID: 11400000, guid: d7669ce34c36bb449b507ef81aa1be37, type: 2}
+  - {fileID: 11400000, guid: 017e0a808f72fac4fa592967cf2b28aa, type: 2}
+  - {fileID: 11400000, guid: 6c75667828b750d4a9b985dcd3525783, type: 2}
+  - {fileID: 11400000, guid: aefcacd2f2bd84e42b1a0d969ad21fd5, type: 2}
+  - {fileID: 11400000, guid: 9bdc1ab3a69d5ea47a51e8762fa0699d, type: 2}
+  - {fileID: 11400000, guid: f43060ec4e04e5642ac9543dcf4331ce, type: 2}
   blocksPerFruit: 2
   spawnArea: {fileID: 0}

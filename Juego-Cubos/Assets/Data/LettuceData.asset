@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff779808db2cf8d46a3e8f9f8b50b0c0, type: 3}
+  m_Name: LettuceData
+  m_EditorClassIdentifier: Assembly-CSharp::FruitData
+  fruitType: 14
+  displayName: Lettuce
+  image: {fileID: 21300000, guid: 23d657c7a2684a94d913f4a4b8bb8869, type: 3}
+  material: {fileID: 2100000, guid: 19be012d9df741e47a3d3b3593ca5a3d, type: 2}

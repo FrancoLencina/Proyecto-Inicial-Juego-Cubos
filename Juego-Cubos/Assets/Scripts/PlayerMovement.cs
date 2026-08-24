@@ -128,10 +128,18 @@ public class PlayerMovement : MonoBehaviour
 
         if (wallNormal != Vector3.zero)
         {
-            desiredVelocity = Vector3.ProjectOnPlane(
+            float movementIntoWall = Vector3.Dot(
                 desiredVelocity,
                 wallNormal
             );
+
+            if (movementIntoWall < 0f)
+            {
+                desiredVelocity = Vector3.ProjectOnPlane(
+                    desiredVelocity,
+                    wallNormal
+                );
+            }
         }
 
 
@@ -224,13 +232,15 @@ public class PlayerMovement : MonoBehaviour
 
     void OnCollisionStay(Collision collision)
     {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("HeldFruitBlock"))
+            return;
+
+        if (collision.gameObject.layer == LayerMask.NameToLayer("FruitBlocks"))
+            return;
+
         foreach (ContactPoint contact in collision.contacts)
         {
             Vector3 normal = contact.normal;
-
-
-            // Si la normal tiene poco componente Y,
-            // estamos tocando una superficie vertical.
 
             if (normal.y < 0.5f)
             {

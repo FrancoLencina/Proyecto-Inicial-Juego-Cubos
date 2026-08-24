@@ -8,6 +8,13 @@ public class PlayerInteraction : MonoBehaviour
     [SerializeField] private Transform holdPoint;
 
     private GameObject heldObject;
+    private Rigidbody heldRigidbody;
+
+    private int originalLayer;
+
+    private Vector3 collisionNormal;
+    private bool isColliding;
+    private HeldBlockCollision heldBlockCollision;
 
     private void Update()
     {
@@ -27,8 +34,6 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 5f, fruitBlockLayer))
         {
-            //Debug.Log("Estoy mirando un FruitBlock: " + hit.collider.gameObject.name);
-
             if (Keyboard.current.eKey.wasPressedThisFrame)
             {
                 GrabObject(hit.collider.gameObject);
@@ -36,46 +41,80 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (heldObject == null || heldRigidbody == null)
+            return;
+
+        Vector3 difference = holdPoint.position - heldRigidbody.position;
+
+        heldRigidbody.linearVelocity =
+            difference / Time.fixedDeltaTime;
+
+        heldRigidbody.MoveRotation(holdPoint.rotation);
+    }
+
     private void GrabObject(GameObject objectToGrab)
     {
         heldObject = objectToGrab;
 
-        Rigidbody rb = heldObject.GetComponent<Rigidbody>();
-        Collider col = heldObject.GetComponent<Collider>();
+        heldRigidbody = heldObject.GetComponent<Rigidbody>();
+        heldBlockCollision = heldObject.GetComponent<HeldBlockCollision>();
 
-        if (rb != null)
+        originalLayer = heldObject.layer;
+        heldObject.layer = LayerMask.NameToLayer("HeldFruitBlock");
+
+        if (heldRigidbody != null)
         {
-            rb.isKinematic = true;
+            heldRigidbody.useGravity = false;
+            heldRigidbody.isKinematic = false;
         }
-
-        if (col != null)
-        {
-            col.enabled = false;
-        }
-
-        heldObject.transform.position = holdPoint.position;
-        heldObject.transform.rotation = holdPoint.rotation;
-
-        heldObject.transform.SetParent(holdPoint);
     }
 
     private void DropObject()
     {
-        heldObject.transform.SetParent(null);
+        if (heldObject == null)
+            return;
 
-        Rigidbody rb = heldObject.GetComponent<Rigidbody>();
-        Collider col = heldObject.GetComponent<Collider>();
+        heldObject.layer = originalLayer;
 
-        if (col != null)
+        if (heldRigidbody != null)
         {
-            col.enabled = true;
-        }
-
-        if (rb != null)
-        {
-            rb.isKinematic = false;
+            heldRigidbody.useGravity = true;
         }
 
         heldObject = null;
+        heldRigidbody = null;
+        heldBlockCollision = null;
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.contactCount == 0)
+            return;
+
+        isColliding = true;
+
+        Vector3 normal = Vector3.zero;
+
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            normal += collision.GetContact(i).normal;
+        }
+
+        collisionNormal = normal.normalized;
+
+        Debug.Log(
+            "FruitBlock colisionando con: "
+            + collision.gameObject.name
+            + " | Normal: "
+            + collisionNormal
+        );
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        isColliding = false;
+        collisionNormal = Vector3.zero;
     }
 }

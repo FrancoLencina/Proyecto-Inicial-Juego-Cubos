@@ -2,7 +2,7 @@ public enum FruitType
 {
     Apple,
     Banana,
-    Anana,
+    Beet,
     Orange,
     Grape,
     Strawberry,

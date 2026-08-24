@@ -15,8 +15,8 @@ TagManager:
   - FruitBlocks
   - TargetZone
   - Ground
-  - 
-  - 
+  - Player
+  - HeldFruitBlock
   - 
   - 
   - 

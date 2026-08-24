@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FruitData
   fruitType: 3
   displayName: Orange
-  image: {fileID: 21300000, guid: 4de752d036cfc95449f175fcac75243e, type: 3}
+  image: {fileID: 21300000, guid: c2f28b64a9ca1474bb2df401dc5369af, type: 3}
   material: {fileID: 2100000, guid: f5d6cdb0803d05c40aa4ca054c4d6851, type: 2}
