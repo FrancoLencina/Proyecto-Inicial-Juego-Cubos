@@ -8,26 +8,41 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Jump")]
     public float jumpForce = 5f;
-    public float jumpHoldForce = 15f;
-    public float maxJumpTime = 0.4f;
 
-    [Header("Gravity")]
-    public float gravityMultiplier = 2f;
+    [Header("Ground Detection")]
+    public LayerMask groundLayer;
+    public float groundCheckHeight = 1f;
+    public float groundCheckRadius = 0.25f;
+    public float groundCheckDistance = 0.5f;
 
     private Rigidbody rb;
     private Vector3 movement;
 
     private bool isGrounded;
-    private bool isJumping;
-    private float jumpTime;
+
+    // Normal de la pared que estamos tocando
+    private Vector3 wallNormal;
+
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
     }
 
+
     void Update()
     {
+        // =========================
+        // GROUND CHECK
+        // =========================
+
+        CheckGround();
+
+
+        // =========================
+        // MOVIMIENTO
+        // =========================
+
         float horizontal = 0f;
         float vertical = 0f;
 
@@ -43,82 +58,192 @@ public class PlayerMovement : MonoBehaviour
         if (Keyboard.current.sKey.isPressed)
             vertical = -1f;
 
-        // Movimiento relativo a la rotación del personaje
+
         movement =
             transform.right * horizontal +
             transform.forward * vertical;
 
-        movement.Normalize();
 
-        // Comenzar salto
+        if (movement.magnitude > 1f)
+            movement.Normalize();
+
+
+        // =========================
+        // SALTO
+        // =========================
+
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            rb.AddForce(
+                Vector3.up * jumpForce,
+                ForceMode.Impulse
+            );
 
             isGrounded = false;
-            isJumping = true;
-            jumpTime = 0f;
-        }
-
-        // Soltar espacio
-        if (Keyboard.current.spaceKey.wasReleasedThisFrame)
-        {
-            isJumping = false;
         }
     }
+
 
     void FixedUpdate()
     {
-        Vector3 velocity = rb.linearVelocity;
+        // Movimiento que vamos a aplicar
+        Vector3 finalMovement = movement;
 
-        // Movimiento horizontal
-        velocity.x = movement.x * speed;
-        velocity.z = movement.z * speed;
 
-        rb.linearVelocity = velocity;
+        // =========================
+        // EVITAR PEGARSE A PAREDES
+        // =========================
 
-        // Salto variable
-        if (isJumping && Keyboard.current.spaceKey.isPressed)
+        if (wallNormal != Vector3.zero)
         {
-            if (jumpTime < maxJumpTime)
-            {
-                rb.AddForce(
-                    Vector3.up * jumpHoldForce,
-                    ForceMode.Acceleration
-                );
-
-                jumpTime += Time.fixedDeltaTime;
-            }
-            else
-            {
-                isJumping = false;
-            }
-        }
-
-        // Gravedad
-        if (!isGrounded)
-        {
-            rb.AddForce(
-                Physics.gravity * (gravityMultiplier - 1f),
-                ForceMode.Acceleration
+            finalMovement = Vector3.ProjectOnPlane(
+                finalMovement,
+                wallNormal
             );
         }
+
+
+        // =========================
+        // MOVIMIENTO FÍSICO
+        // =========================
+
+        Vector3 movementAmount =
+            finalMovement *
+            speed *
+            Time.fixedDeltaTime;
+
+        rb.MovePosition(
+            rb.position + movementAmount
+        );
+
+
+        // Limpiamos la normal para el siguiente FixedUpdate
+        wallNormal = Vector3.zero;
     }
 
-    void OnCollisionEnter(Collision collision)
+
+    // =====================================================
+    // DETECCIÓN DEL SUELO
+    // =====================================================
+
+    void CheckGround()
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        Vector3 origin =
+            transform.position +
+            Vector3.up * groundCheckHeight;
+
+        RaycastHit hit;
+
+
+        bool detected = Physics.SphereCast(
+            origin,
+            groundCheckRadius,
+            Vector3.down,
+            out hit,
+            groundCheckDistance,
+            groundLayer,
+            QueryTriggerInteraction.Ignore
+        );
+
+
+        // La superficie debe ser suficientemente horizontal.
+        // Una pared tiene aproximadamente normal.y = 0.
+        // Un suelo tiene normal.y = 1.
+
+        if (detected && hit.normal.y > 0.5f)
         {
             isGrounded = true;
-            isJumping = false;
         }
-    }
-
-    void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
+        else
         {
             isGrounded = false;
         }
+    }
+
+
+    // =====================================================
+    // DETECCIÓN DE PAREDES
+    // =====================================================
+
+    void OnCollisionStay(Collision collision)
+    {
+        foreach (ContactPoint contact in collision.contacts)
+        {
+            // Si la normal tiene poco componente Y,
+            // estamos tocando una superficie vertical/inclinada.
+
+            if (contact.normal.y < 0.5f)
+            {
+                wallNormal = contact.normal;
+                break;
+            }
+        }
+    }
+
+
+    // =====================================================
+    // VISUALIZACIÓN DEL SPHERECAST
+    // =====================================================
+
+    void OnDrawGizmosSelected()
+    {
+        Vector3 origin =
+            transform.position +
+            Vector3.up * groundCheckHeight;
+
+
+        RaycastHit hit;
+
+
+        bool detected = Physics.SphereCast(
+            origin,
+            groundCheckRadius,
+            Vector3.down,
+            out hit,
+            groundCheckDistance,
+            groundLayer,
+            QueryTriggerInteraction.Ignore
+        );
+
+
+        if (detected && hit.normal.y > 0.5f)
+        {
+            Gizmos.color = Color.green;
+        }
+        else if (detected)
+        {
+            Gizmos.color = Color.yellow;
+        }
+        else
+        {
+            Gizmos.color = Color.red;
+        }
+
+
+        // Esfera inicial
+        Gizmos.DrawWireSphere(
+            origin,
+            groundCheckRadius
+        );
+
+
+        // Esfera final
+        Vector3 end =
+            origin +
+            Vector3.down *
+            groundCheckDistance;
+
+
+        Gizmos.DrawWireSphere(
+            end,
+            groundCheckRadius
+        );
+
+
+        // Recorrido
+        Gizmos.DrawLine(
+            origin,
+            end
+        );
     }
 }

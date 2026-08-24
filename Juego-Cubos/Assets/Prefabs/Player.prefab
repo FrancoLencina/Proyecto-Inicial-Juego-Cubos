@@ -271,8 +271,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   speed: 10
-  jumpForce: 9
-  jumpHoldForce: 15
+  jumpForce: 5
+  jumpHoldForce: 5
   maxJumpTime: 0.5
   gravityMultiplier: 2
 --- !u!114 &5341463762099294650
