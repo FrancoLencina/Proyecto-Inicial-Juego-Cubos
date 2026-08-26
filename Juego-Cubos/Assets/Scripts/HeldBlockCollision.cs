@@ -2,29 +2,36 @@ using UnityEngine;
 
 public class HeldBlockCollision : MonoBehaviour
 {
+    public bool IsBlocked { get; private set; }
     public Vector3 CollisionNormal { get; private set; }
-    public bool IsColliding { get; private set; }
 
     private void FixedUpdate()
     {
-        IsColliding = false;
+        IsBlocked = false;
         CollisionNormal = Vector3.zero;
     }
 
     private void OnCollisionStay(Collision collision)
     {
-        if (collision.contactCount == 0)
+        // Ignorar otros FruitBlocks.
+        if (collision.gameObject.layer == LayerMask.NameToLayer("FruitBlocks"))
             return;
 
-        IsColliding = true;
+        // Ignorar al Player por las Layers.
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
+            return;
 
-        Vector3 normal = Vector3.zero;
-
-        for (int i = 0; i < collision.contactCount; i++)
+        foreach (ContactPoint contact in collision.contacts)
         {
-            normal += collision.GetContact(i).normal;
-        }
+            Vector3 normal = contact.normal;
 
-        CollisionNormal = normal.normalized;
+            // Consideramos bloqueo solamente contra superficies
+            // aproximadamente verticales.
+            if (Mathf.Abs(normal.y) < 0.5f)
+            {
+                IsBlocked = true;
+                CollisionNormal = normal;
+            }
+        }
     }
 }

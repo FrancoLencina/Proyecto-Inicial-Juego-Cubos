@@ -275,6 +275,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   holdPoint: {fileID: 8023107354669244637}
+  heldBlockBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 257
+  maxRotationCorrection: 0.25
+  rotationCorrectionStep: 0.01
+  pushForce: 3
 --- !u!1 &4249321013474277945
 GameObject:
   m_ObjectHideFlags: 0
