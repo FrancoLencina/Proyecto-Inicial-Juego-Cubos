@@ -6,9 +6,9 @@ public class TargetZone : MonoBehaviour
 {
     [SerializeField] private GameManager gameManager;
     [SerializeField] private LayerMask validBlockLayer;
+    [SerializeField] private float verticalTolerance = 0.05f;
 
     private List<FruitBlock> fruitBlocksInside = new List<FruitBlock>();
-    private bool stackWasCorrect = false;
 
     private void Update()
     {
@@ -32,14 +32,10 @@ public class TargetZone : MonoBehaviour
             }
         }
 
-        bool stackIsCorrect = IsCorrectStack();
-
-        if (stackIsCorrect && !stackWasCorrect)
+        if (IsCorrectStack())
         {
             Debug.Log("¡Apilamiento correcto!");
         }
-
-        stackWasCorrect = stackIsCorrect;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -103,8 +99,51 @@ public class TargetZone : MonoBehaviour
             {
                 return false;
             }
+
+            if (i > 0)
+            {
+                FruitBlock lowerBlock = orderedBlocks[i - 1];
+
+                if (!AreBlocksStacked(lowerBlock, block))
+                {
+                    return false;
+                }
+            }
         }
 
         return true;
+    }
+
+    private bool AreBlocksStacked(FruitBlock lowerBlock, FruitBlock upperBlock)
+    {
+        Collider lowerCollider = lowerBlock.GetComponent<Collider>();
+        Collider upperCollider = upperBlock.GetComponent<Collider>();
+
+        if (lowerCollider == null || upperCollider == null)
+        {
+            return false;
+        }
+
+        Bounds lowerBounds = lowerCollider.bounds;
+        Bounds upperBounds = upperCollider.bounds;
+
+        float verticalDistance = Mathf.Abs(
+            upperBounds.min.y - lowerBounds.max.y
+        );
+
+        if (verticalDistance > verticalTolerance)
+        {
+            return false;
+        }
+
+        bool overlapsX =
+            lowerBounds.min.x < upperBounds.max.x &&
+            lowerBounds.max.x > upperBounds.min.x;
+
+        bool overlapsZ =
+            lowerBounds.min.z < upperBounds.max.z &&
+            lowerBounds.max.z > upperBounds.min.z;
+
+        return overlapsX && overlapsZ;
     }
 }
