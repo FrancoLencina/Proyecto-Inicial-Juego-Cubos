@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -19,91 +20,255 @@ public class MultiplayerUI : MonoBehaviour
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button leaveRoomButton;
 
-private void Start()
-{
-    // La sala de espera comienza oculta
-    roomPanel.SetActive(false);
+    private bool updatingRoom = false;
 
-    // Los elementos para unirse comienzan ocultos
-    joinCodeInput.gameObject.SetActive(false);
-    confirmJoinButton.gameObject.SetActive(false);
+    private void Start()
+    {
+        // Sala oculta al iniciar
+        roomPanel.SetActive(false);
 
-    // Eventos de los botones
-    createRoomButton.onClick.AddListener(CreateRoom);
-    joinRoomButton.onClick.AddListener(ShowJoinMenu);
-    confirmJoinButton.onClick.AddListener(JoinRoom);
+        // Elementos de unirse ocultos
+        joinCodeInput.gameObject.SetActive(false);
+        confirmJoinButton.gameObject.SetActive(false);
 
-    leaveRoomButton.onClick.AddListener(LeaveRoom);
-    startGameButton.onClick.AddListener(StartGame);
-}
+        // Eventos
+        createRoomButton.onClick.AddListener(CreateRoom);
+        joinRoomButton.onClick.AddListener(ShowJoinMenu);
+        confirmJoinButton.onClick.AddListener(JoinRoom);
+
+        leaveRoomButton.onClick.AddListener(LeaveRoom);
+        startGameButton.onClick.AddListener(StartGame);
+
+        // Escuchar cuando el Host cierra la sala
+        MultiplayerManager.Instance.SessionClosed += OnSessionClosed;
+    }
+
+    private void OnDestroy()
+    {
+        if (MultiplayerManager.Instance != null)
+        {
+            MultiplayerManager.Instance.SessionClosed -= OnSessionClosed;
+        }
+    }
+
+    // =========================
+    // CREAR SALA
+    // =========================
 
     private async void CreateRoom()
-{
-    createRoomButton.interactable = false;
-    joinRoomButton.interactable = false;
-
-    statusText.text = "Creando sala...";
-
-    string code = await MultiplayerManager.Instance.CreateRoom();
-
-    if (code != null)
     {
-        // Ocultar menú
-        createJoinPanel.SetActive(false);
+        createRoomButton.interactable = false;
+        joinRoomButton.interactable = false;
 
-        // Mostrar sala de espera
-        roomPanel.SetActive(true);
+        statusText.text = "Creando sala...";
 
-        roomCodeText.text = "Código:" + code;
-        playersText.text = "Jugadores: 1/2";
-        statusText.text = "Esperando otro jugador...";
+        string code =
+            await MultiplayerManager.Instance.CreateRoom();
 
-        startGameButton.interactable = true;
+        if (code != null)
+        {
+            createJoinPanel.SetActive(false);
+            roomPanel.SetActive(true);
+
+            roomCodeText.text = "Código: " + code;
+
+            playersText.text = "Jugadores: 1/2";
+            statusText.text = "Esperando otro jugador...";
+
+            // No puede comenzar todavía
+            startGameButton.interactable = false;
+
+            StartRoomUpdater();
+        }
+        else
+        {
+            statusText.text = "No se pudo crear la sala.";
+
+            createRoomButton.interactable = true;
+            joinRoomButton.interactable = true;
+        }
     }
-    else
+
+    // =========================
+    // ACTUALIZAR SALA
+    // =========================
+
+    private void StartRoomUpdater()
     {
-        statusText.text = "No se pudo crear la sala.";
+        if (!updatingRoom)
+        {
+            updatingRoom = true;
+            UpdateRoomStatus();
+        }
+    }
+
+    private async void UpdateRoomStatus()
+    {
+        while (roomPanel.activeSelf)
+        {
+            if (!MultiplayerManager.Instance.HasActiveSession())
+            {
+                break;
+            }
+
+            int players =
+                MultiplayerManager.Instance.GetPlayerCount();
+
+            playersText.text = $"Jugadores: {players}/2";
+
+            // =========================
+            // HOST
+            // =========================
+
+            if (MultiplayerManager.Instance.IsHost)
+            {
+                if (players >= 2)
+                {
+                    statusText.text = "¡Jugador conectado!";
+                    startGameButton.interactable = true;
+                }
+                else
+                {
+                    statusText.text = "Esperando otro jugador...";
+                    startGameButton.interactable = false;
+                }
+            }
+
+            // =========================
+            // CLIENTE
+            // =========================
+
+            else
+            {
+                statusText.text = "Esperando al anfitrión...";
+                startGameButton.interactable = false;
+            }
+
+            await Task.Delay(1000);
+        }
+
+        updatingRoom = false;
+    }
+
+    // =========================
+    // HOST CERRÓ LA SALA
+    // =========================
+
+    private void OnSessionClosed()
+    {
+        Debug.Log("El Host cerró la sala.");
+
+        // Detener cualquier actualización
+        updatingRoom = false;
+
+        // Mostrar mensaje antes de volver al menú
+        statusText.text = "El anfitrión cerró la sala.";
+
+        playersText.text = "";
+
+        // Desconectar Netcode
+        if (Unity.Netcode.NetworkManager.Singleton != null &&
+            Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            Unity.Netcode.NetworkManager.Singleton.Shutdown();
+        }
+
+        // Volver al menú después de un pequeño momento
+        Invoke(nameof(ReturnToMenuAfterHostClosed), 1.5f);
+    }
+
+    private void ReturnToMenuAfterHostClosed()
+    {
+        roomPanel.SetActive(false);
+        createJoinPanel.SetActive(true);
 
         createRoomButton.interactable = true;
         joinRoomButton.interactable = true;
+
+        // Muy importante:
+        // volver a habilitar el botón de confirmar
+        confirmJoinButton.interactable = true;
+
+        joinCodeInput.gameObject.SetActive(false);
+        confirmJoinButton.gameObject.SetActive(false);
+
+        roomCodeText.text = "";
+        playersText.text = "";
+        statusText.text = "";
+
+        updatingRoom = false;
     }
-}
+
+    // =========================
+    // SALIR DE LA SALA
+    // =========================
 
     private async void LeaveRoom()
-{
-    statusText.text = "Saliendo...";
+    {
+        statusText.text = "Saliendo...";
 
-    await MultiplayerManager.Instance.LeaveRoom();
+        await MultiplayerManager.Instance.LeaveRoom();
 
-    roomPanel.SetActive(false);
-    createJoinPanel.SetActive(true);
+        ResetRoomUI();
+    }
 
-    createRoomButton.interactable = true;
-    joinRoomButton.interactable = true;
+    // =========================
+    // RESET UI
+    // =========================
 
-    // Volver al estado inicial del menú
-    joinCodeInput.gameObject.SetActive(false);
-    confirmJoinButton.gameObject.SetActive(false);
-}
+    private void ResetRoomUI()
+    {
+        roomPanel.SetActive(false);
+        createJoinPanel.SetActive(true);
+
+        createRoomButton.interactable = true;
+        joinRoomButton.interactable = true;
+
+        joinCodeInput.gameObject.SetActive(false);
+
+        confirmJoinButton.gameObject.SetActive(false);
+        confirmJoinButton.interactable = true;
+
+        roomCodeText.text = "";
+        playersText.text = "";
+        statusText.text = "";
+
+        updatingRoom = false;
+    }
+
+    // =========================
+    // COMENZAR PARTIDA
+    // =========================
 
     private void StartGame()
     {
         MultiplayerManager.Instance.StartGame();
     }
 
-    private void ShowJoinMenu()
-{
-    joinCodeInput.gameObject.SetActive(true);
-    confirmJoinButton.gameObject.SetActive(true);
+    // =========================
+    // MOSTRAR MENU UNIRSE
+    // =========================
 
-    joinCodeInput.text = "";
-    joinCodeInput.Select();
-    joinCodeInput.ActivateInputField();
-}
+    private void ShowJoinMenu()
+    {
+        joinCodeInput.gameObject.SetActive(true);
+        confirmJoinButton.gameObject.SetActive(true);
+
+        confirmJoinButton.interactable = true;
+
+        joinCodeInput.text = "";
+        joinCodeInput.Select();
+        joinCodeInput.ActivateInputField();
+    }
+
+    // =========================
+    // UNIRSE A SALA
+    // =========================
 
     private async void JoinRoom()
     {
-        string code = joinCodeInput.text.Trim().ToUpper();
+        string code =
+            joinCodeInput.text.Trim().ToUpper();
 
         if (string.IsNullOrEmpty(code))
         {
@@ -115,23 +280,29 @@ private void Start()
 
         statusText.text = "Buscando sala...";
 
-        bool success = await MultiplayerManager.Instance.JoinRoom(code);
+        bool success =
+            await MultiplayerManager.Instance.JoinRoom(code);
 
         if (success)
         {
             createJoinPanel.SetActive(false);
             roomPanel.SetActive(true);
 
-            roomCodeText.text = "Código:" + code;
-            playersText.text = "Conectado";
+            roomCodeText.text = "Código: " + code;
+
+            playersText.text = "Jugadores: 2/2";
             statusText.text = "Esperando al anfitrión...";
 
-            // El cliente no puede iniciar la partida
+            // El cliente nunca puede iniciar
             startGameButton.interactable = false;
+
+            StartRoomUpdater();
         }
         else
         {
             statusText.text = "No se encontró la sala.";
+
+            // Puede volver a intentar
             confirmJoinButton.interactable = true;
         }
     }

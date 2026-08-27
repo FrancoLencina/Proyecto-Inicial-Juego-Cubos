@@ -12,6 +12,10 @@ public class MultiplayerManager : MonoBehaviour
     public static MultiplayerManager Instance { get; private set; }
 
     private IHostSession currentSession;
+    private ISession joinedSession;
+
+    // Evento que avisa a la UI cuando el Host cerró la sala
+    public event Action SessionClosed;
 
     public bool IsHost => currentSession != null;
 
@@ -62,7 +66,8 @@ public class MultiplayerManager : MonoBehaviour
                 MaxPlayers = 2
             }.WithRelayNetwork();
 
-            currentSession = await MultiplayerService.Instance.CreateSessionAsync(options);
+            currentSession =
+                await MultiplayerService.Instance.CreateSessionAsync(options);
 
             string code = currentSession.Code;
 
@@ -94,13 +99,17 @@ public class MultiplayerManager : MonoBehaviour
 
             var options = new JoinSessionOptions();
 
-            var session = await MultiplayerService.Instance.JoinSessionByCodeAsync(
-                code.ToUpper(),
-                options
-            );
+            joinedSession =
+                await MultiplayerService.Instance.JoinSessionByCodeAsync(
+                    code.ToUpper(),
+                    options
+                );
+
+            // Escuchar cuando el Host elimina/cierra la sesión
+            joinedSession.Deleted += OnSessionDeleted;
 
             Debug.Log("Se encontró la sala.");
-            Debug.Log("Conectado a la sala: " + session.Code);
+            Debug.Log("Conectado a la sala: " + joinedSession.Code);
 
             return true;
         }
@@ -112,6 +121,48 @@ public class MultiplayerManager : MonoBehaviour
     }
 
     // =========================
+    // HOST CERRÓ LA SALA
+    // =========================
+
+    private void OnSessionDeleted()
+    {
+        Debug.Log("La sesión fue eliminada por el Host.");
+
+        joinedSession = null;
+
+        // Avisar a MultiplayerUI
+        SessionClosed?.Invoke();
+    }
+
+    // =========================
+    // CANTIDAD DE JUGADORES
+    // =========================
+
+    public int GetPlayerCount()
+    {
+        if (currentSession != null)
+        {
+            return currentSession.Players.Count;
+        }
+
+        if (joinedSession != null)
+        {
+            return joinedSession.Players.Count;
+        }
+
+        return 0;
+    }
+
+    // =========================
+    // SESIÓN ACTIVA
+    // =========================
+
+    public bool HasActiveSession()
+    {
+        return currentSession != null || joinedSession != null;
+    }
+
+    // =========================
     // SALIR DE LA SALA
     // =========================
 
@@ -119,24 +170,71 @@ public class MultiplayerManager : MonoBehaviour
     {
         try
         {
+            // =========================
+            // HOST
+            // =========================
+
             if (currentSession != null)
             {
-                await currentSession.LeaveAsync();
+                Debug.Log("El Host está cerrando la sala...");
+
+                // El Host elimina completamente la sesión.
+                await currentSession.DeleteAsync();
+
                 currentSession = null;
+
+                Debug.Log("Sala eliminada correctamente.");
             }
+
+            // =========================
+            // CLIENTE
+            // =========================
+
+            if (joinedSession != null)
+            {
+                // Dejar de escuchar el evento
+                joinedSession.Deleted -= OnSessionDeleted;
+
+                await joinedSession.LeaveAsync();
+
+                joinedSession = null;
+
+                Debug.Log("Cliente abandonó la sala.");
+            }
+
+            // =========================
+            // NETCODE
+            // =========================
 
             if (NetworkManager.Singleton != null &&
                 NetworkManager.Singleton.IsListening)
             {
                 NetworkManager.Singleton.Shutdown();
             }
-
-            Debug.Log("Se abandonó la sala.");
         }
         catch (Exception e)
         {
             Debug.LogError("Error saliendo de la sala: " + e);
+
+            // Limpiar referencias aunque haya ocurrido un error
+            currentSession = null;
+            joinedSession = null;
         }
+    }
+
+    // =========================
+    // LIMPIAR SESIÓN
+    // =========================
+
+    public void ClearSession()
+    {
+        if (joinedSession != null)
+        {
+            joinedSession.Deleted -= OnSessionDeleted;
+        }
+
+        currentSession = null;
+        joinedSession = null;
     }
 
     // =========================
