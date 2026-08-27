@@ -1,0 +1,424 @@
+{
+  "player_build_data": [
+    {
+      "type": "playerBuildTimingData",
+      "msg": {
+        "build_event_id": "5682a14ee42b50143829f902794b54c0",
+        "build_player": 168113,
+        "preprocess_player": 958,
+        "produce_player_script_assemblies": 55832,
+        "build_scripts_dlls": 73,
+        "writing_asset_files": 47283,
+        "postprocess_built_player": 58266,
+        "node_summary_table": [
+          {
+            "name": "Csc",
+            "duration": 217
+          },
+          {
+            "name": "Csc",
+            "duration": 7506
+          },
+          {
+            "name": "Csc",
+            "duration": 3439
+          },
+          {
+            "name": "Csc",
+            "duration": 4000
+          },
+          {
+            "name": "Csc",
+            "duration": 898
+          },
+          {
+            "name": "Csc",
+            "duration": 1036
+          },
+          {
+            "name": "Csc",
+            "duration": 2362
+          },
+          {
+            "name": "Csc",
+            "duration": 1632
+          },
+          {
+            "name": "Csc",
+            "duration": 1437
+          },
+          {
+            "name": "Csc",
+            "duration": 2259
+          },
+          {
+            "name": "Csc",
+            "duration": 4898
+          },
+          {
+            "name": "Csc",
+            "duration": 1538
+          },
+          {
+            "name": "Csc",
+            "duration": 447
+          },
+          {
+            "name": "Csc",
+            "duration": 3357
+          },
+          {
+            "name": "Csc",
+            "duration": 1432
+          },
+          {
+            "name": "Csc",
+            "duration": 240
+          },
+          {
+            "name": "Csc",
+            "duration": 4319
+          },
+          {
+            "name": "Csc",
+            "duration": 12086
+          },
+          {
+            "name": "Csc",
+            "duration": 1796
+          },
+          {
+            "name": "Csc",
+            "duration": 3283
+          },
+          {
+            "name": "Csc",
+            "duration": 3474
+          },
+          {
+            "name": "Csc",
+            "duration": 885
+          },
+          {
+            "name": "Csc",
+            "duration": 594
+          },
+          {
+            "name": "Csc",
+            "duration": 256
+          },
+          {
+            "name": "Csc",
+            "duration": 212
+          },
+          {
+            "name": "Csc",
+            "duration": 1183
+          },
+          {
+            "name": "Csc",
+            "duration": 556
+          },
+          {
+            "name": "Csc",
+            "duration": 5112
+          },
+          {
+            "name": "Csc",
+            "duration": 5662
+          },
+          {
+            "name": "Csc",
+            "duration": 1811
+          },
+          {
+            "name": "Csc",
+            "duration": 1210
+          },
+          {
+            "name": "Csc",
+            "duration": 768
+          },
+          {
+            "name": "Csc",
+            "duration": 1150
+          },
+          {
+            "name": "Csc",
+            "duration": 2281
+          },
+          {
+            "name": "Csc",
+            "duration": 2930
+          },
+          {
+            "name": "Csc",
+            "duration": 1537
+          },
+          {
+            "name": "Csc",
+            "duration": 1250
+          },
+          {
+            "name": "Csc",
+            "duration": 1494
+          },
+          {
+            "name": "Csc",
+            "duration": 2182
+          },
+          {
+            "name": "Csc",
+            "duration": 574
+          },
+          {
+            "name": "Csc",
+            "duration": 895
+          },
+          {
+            "name": "Csc",
+            "duration": 1206
+          },
+          {
+            "name": "Csc",
+            "duration": 1612
+          },
+          {
+            "name": "Csc",
+            "duration": 1536
+          },
+          {
+            "name": "Csc",
+            "duration": 2392
+          },
+          {
+            "name": "Csc",
+            "duration": 2285
+          },
+          {
+            "name": "Csc",
+            "duration": 650
+          },
+          {
+            "name": "Csc",
+            "duration": 1148
+          },
+          {
+            "name": "Csc",
+            "duration": 583
+          },
+          {
+            "name": "Csc",
+            "duration": 4398
+          },
+          {
+            "name": "Csc",
+            "duration": 2446
+          },
+          {
+            "name": "Csc",
+            "duration": 1667
+          },
+          {
+            "name": "Csc",
+            "duration": 1250
+          },
+          {
+            "name": "Csc",
+            "duration": 1335
+          },
+          {
+            "name": "Csc",
+            "duration": 2117
+          },
+          {
+            "name": "Csc",
+            "duration": 652
+          },
+          {
+            "name": "Csc",
+            "duration": 1306
+          },
+          {
+            "name": "Csc",
+            "duration": 559
+          },
+          {
+            "name": "Csc",
+            "duration": 1094
+          },
+          {
+            "name": "Csc",
+            "duration": 1330
+          },
+          {
+            "name": "Csc",
+            "duration": 1846
+          },
+          {
+            "name": "Csc",
+            "duration": 1249
+          },
+          {
+            "name": "Csc",
+            "duration": 1761
+          },
+          {
+            "name": "Csc",
+            "duration": 510
+          },
+          {
+            "name": "Csc",
+            "duration": 824
+          },
+          {
+            "name": "Csc",
+            "duration": 892
+          },
+          {
+            "name": "Csc",
+            "duration": 1406
+          },
+          {
+            "name": "Csc",
+            "duration": 4765
+          },
+          {
+            "name": "Csc",
+            "duration": 1857
+          },
+          {
+            "name": "Csc",
+            "duration": 1229
+          },
+          {
+            "name": "Csc",
+            "duration": 675
+          },
+          {
+            "name": "Csc",
+            "duration": 1274
+          },
+          {
+            "name": "Csc",
+            "duration": 1140
+          },
+          {
+            "name": "Csc",
+            "duration": 2219
+          },
+          {
+            "name": "Csc",
+            "duration": 1535
+          },
+          {
+            "name": "Csc",
+            "duration": 1834
+          },
+          {
+            "name": "Csc",
+            "duration": 1207
+          },
+          {
+            "name": "Csc",
+            "duration": 508
+          },
+          {
+            "name": "Csc",
+            "duration": 1690
+          },
+          {
+            "name": "Csc",
+            "duration": 1233
+          },
+          {
+            "name": "Csc",
+            "duration": 1745
+          },
+          {
+            "name": "Csc",
+            "duration": 1329
+          },
+          {
+            "name": "Csc",
+            "duration": 1818
+          },
+          {
+            "name": "Csc",
+            "duration": 2302
+          },
+          {
+            "name": "Csc",
+            "duration": 896
+          },
+          {
+            "name": "Csc",
+            "duration": 972
+          },
+          {
+            "name": "Csc",
+            "duration": 1095
+          },
+          {
+            "name": "Csc",
+            "duration": 1609
+          },
+          {
+            "name": "Csc",
+            "duration": 864
+          },
+          {
+            "name": "Csc",
+            "duration": 2710
+          },
+          {
+            "name": "Csc",
+            "duration": 1235
+          },
+          {
+            "name": "Csc",
+            "duration": 2135
+          },
+          {
+            "name": "Csc",
+            "duration": 652
+          },
+          {
+            "name": "Csc",
+            "duration": 1191
+          },
+          {
+            "name": "Csc",
+            "duration": 1277
+          },
+          {
+            "name": "Csc",
+            "duration": 217
+          },
+          {
+            "name": "Csc",
+            "duration": 217
+          },
+          {
+            "name": "UnityLinker.exe",
+            "duration": 40
+          },
+          {
+            "name": "UnityLinkerOld.exe",
+            "duration": 464
+          }
+        ]
+      },
+      "version": 1
+    },
+    {
+      "type": "unityLinkerData",
+      "msg": {
+        "build_event_id": "5682a14ee42b50143829f902794b54c0",
+        "node_executed": true,
+        "option_rule_set": "Copy"
+      },
+      "version": 1
+    }
+  ]
+}
