@@ -19,60 +19,116 @@ public class PlayerCamera : MonoBehaviour
 
     private float currentVerticalRotation;
 
+    private PlayerMovement playerMovement;
+
+
+    // =========================================================
+    // START
+    // =========================================================
+
     void Start()
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        currentVerticalRotation = verticalAngle;
+        currentVerticalRotation =
+            verticalAngle;
+
+        if (player != null)
+        {
+            playerMovement =
+                player.GetComponent<PlayerMovement>();
+        }
     }
+
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     void LateUpdate()
     {
-        if (Mouse.current == null || player == null)
+        if (Mouse.current == null ||
+            player == null)
+        {
             return;
+        }
 
-        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-        // Rotación horizontal del personaje
-        player.Rotate(
-            Vector3.up * mouseDelta.x * sensitivity
-        );
+        Vector2 mouseDelta =
+            Mouse.current.delta.ReadValue();
 
-        // Rotación vertical de la cámara
-        currentVerticalRotation -= mouseDelta.y * sensitivity;
 
-        currentVerticalRotation = Mathf.Clamp(
-            currentVerticalRotation,
-            minVerticalAngle,
-            maxVerticalAngle
-        );
+        // =====================================================
+        // ROTACIÓN HORIZONTAL
+        // =====================================================
+
+        float horizontalRotation =
+            mouseDelta.x * sensitivity;
+
+
+        if (Mathf.Abs(horizontalRotation) >
+            0.0001f)
+        {
+            if (playerMovement != null)
+            {
+                playerMovement.RequestRotation(
+                    horizontalRotation
+                );
+            }
+        }
+
+
+        // =====================================================
+        // ROTACIÓN VERTICAL DE LA CÁMARA
+        // =====================================================
+
+        currentVerticalRotation -=
+            mouseDelta.y * sensitivity;
+
+
+        currentVerticalRotation =
+            Mathf.Clamp(
+                currentVerticalRotation,
+                minVerticalAngle,
+                maxVerticalAngle
+            );
+
 
         UpdateCameraPosition();
     }
 
+
+    // =========================================================
+    // ACTUALIZAR POSICIÓN DE CÁMARA
+    // =========================================================
+
     void UpdateCameraPosition()
     {
-        // Inclinación vertical de la cámara
-        Quaternion verticalRotation = Quaternion.Euler(
-            currentVerticalRotation,
-            0f,
-            0f
-        );
+        Quaternion verticalRotation =
+            Quaternion.Euler(
+                currentVerticalRotation,
+                0f,
+                0f
+            );
 
-        // Distancia de la cámara respecto al jugador
+
         Vector3 offset =
             player.rotation *
             verticalRotation *
-            new Vector3(0f, 0f, -distance);
+            new Vector3(
+                0f,
+                0f,
+                -distance
+            );
 
-        // Posición final
+
         transform.position =
             player.position +
             Vector3.up * height +
             offset;
 
-        // La cámara mira hacia el jugador
+
         transform.LookAt(
             player.position +
             Vector3.up * height

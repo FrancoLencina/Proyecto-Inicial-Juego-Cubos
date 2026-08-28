@@ -1,23 +1,59 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerInteraction : MonoBehaviour
+public partial class PlayerInteraction : MonoBehaviour
 {
+    [Header("Interaction")]
     [SerializeField] private Camera playerCamera;
     [SerializeField] private LayerMask fruitBlockLayer;
     [SerializeField] private Transform holdPoint;
 
+    [Header("Held Block Collision")]
+    [SerializeField] private LayerMask heldBlockBlockingLayers;
+
+    [Header("Slope")]
+    [SerializeField] private float slopeNormalThreshold = 0.5f;
+
+    [Header("Rotation Correction")]
+    [SerializeField] private float maxRotationCorrection = 0.25f;
+    [SerializeField] private float rotationCorrectionStep = 0.01f;
+
+    [Header("Rotation Prediction")]
+    [SerializeField] private int rotationSamples = 30;
+
+    [Header("Push")]
+    [SerializeField] private float pushForce = 3f;
+
+
+    // =========================================================
+    // ESTADO DEL BLOQUE
+    // =========================================================
+
     private GameObject heldObject;
     private Rigidbody heldRigidbody;
+    private BoxCollider heldCollider;
 
     private int originalLayer;
 
-    private Vector3 collisionNormal;
-    private bool isColliding;
-    private HeldBlockCollision heldBlockCollision;
+
+    // =========================================================
+    // PROPIEDAD PÚBLICA
+    // =========================================================
+
+    public bool IsHoldingBlock =>
+        heldObject != null;
+
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     private void Update()
     {
+        // -----------------------------------------------------
+        // SI ESTÁ SOSTENIENDO UN BLOQUE
+        // -----------------------------------------------------
+
         if (heldObject != null)
         {
             if (Keyboard.current.eKey.wasPressedThisFrame)
@@ -28,93 +64,121 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        Ray ray = playerCamera.ViewportPointToRay(
-            new Vector3(0.5f, 0.5f, 0f)
-        );
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 5f, fruitBlockLayer))
+        // -----------------------------------------------------
+        // BUSCAR FRUITBLOCK
+        // -----------------------------------------------------
+
+        Ray ray =
+            playerCamera.ViewportPointToRay(
+                new Vector3(
+                    0.5f,
+                    0.5f,
+                    0f
+                )
+            );
+
+
+        if (Physics.Raycast(
+            ray,
+            out RaycastHit hit,
+            5f,
+            fruitBlockLayer
+        ))
         {
             if (Keyboard.current.eKey.wasPressedThisFrame)
             {
-                GrabObject(hit.collider.gameObject);
+                GrabObject(
+                    hit.collider.gameObject
+                );
             }
         }
     }
 
+
+    // =========================================================
+    // FIXED UPDATE
+    // =========================================================
+
     private void FixedUpdate()
     {
-        if (heldObject == null || heldRigidbody == null)
-            return;
-
-        Vector3 difference = holdPoint.position - heldRigidbody.position;
-
-        heldRigidbody.linearVelocity =
-            difference / Time.fixedDeltaTime;
-
-        heldRigidbody.MoveRotation(holdPoint.rotation);
-    }
-
-    private void GrabObject(GameObject objectToGrab)
-    {
-        heldObject = objectToGrab;
-
-        heldRigidbody = heldObject.GetComponent<Rigidbody>();
-        heldBlockCollision = heldObject.GetComponent<HeldBlockCollision>();
-
-        originalLayer = heldObject.layer;
-        heldObject.layer = LayerMask.NameToLayer("HeldFruitBlock");
-
-        if (heldRigidbody != null)
+        if (heldObject == null ||
+            heldRigidbody == null ||
+            heldCollider == null)
         {
-            heldRigidbody.useGravity = false;
-            heldRigidbody.isKinematic = false;
-        }
-    }
-
-    private void DropObject()
-    {
-        if (heldObject == null)
             return;
-
-        heldObject.layer = originalLayer;
-
-        if (heldRigidbody != null)
-        {
-            heldRigidbody.useGravity = true;
         }
 
-        heldObject = null;
-        heldRigidbody = null;
-        heldBlockCollision = null;
-    }
 
-    private void OnCollisionStay(Collision collision)
-    {
-        if (collision.contactCount == 0)
-            return;
+        Vector3 currentPosition =
+            heldRigidbody.position;
 
-        isColliding = true;
+        Vector3 targetPosition =
+            holdPoint.position;
 
-        Vector3 normal = Vector3.zero;
+        Quaternion targetRotation =
+            holdPoint.rotation;
 
-        for (int i = 0; i < collision.contactCount; i++)
+
+        Vector3 movement =
+            targetPosition -
+            currentPosition;
+
+
+        // =====================================================
+        // DETECTAR DESCENSO DEL BLOQUE
+        // =====================================================
+
+        if (movement.y < -0.0001f)
         {
-            normal += collision.GetContact(i).normal;
+            if (ShouldDropBecauseOfSurface(
+                currentPosition,
+                targetRotation,
+                movement
+            ))
+            {
+                DropObject();
+                return;
+            }
         }
 
-        collisionNormal = normal.normalized;
 
-        //Debug.Log(
-        //    "FruitBlock colisionando con: "
-        //    + collision.gameObject.name
-        //    + " | Normal: "
-        //    + collisionNormal
-        //);
-    }
+        // =====================================================
+        // POSICIÓN SEGURA
+        // =====================================================
 
-    private void OnCollisionExit(Collision collision)
-    {
-        isColliding = false;
-        collisionNormal = Vector3.zero;
+        Vector3 safePosition =
+            GetSafeBlockPosition(
+                currentPosition,
+                targetPosition,
+                targetRotation
+            );
+
+
+        // =====================================================
+        // MOVIMIENTO REAL
+        // =====================================================
+
+        Vector3 actualMovement =
+            safePosition -
+            currentPosition;
+
+
+        heldRigidbody.MovePosition(
+            safePosition
+        );
+
+        heldRigidbody.MoveRotation(
+            targetRotation
+        );
+
+
+        // =====================================================
+        // EMPUJAR OTROS FRUITBLOCKS
+        // =====================================================
+
+        PushNearbyFruitBlocks(
+            actualMovement
+        );
     }
 }
