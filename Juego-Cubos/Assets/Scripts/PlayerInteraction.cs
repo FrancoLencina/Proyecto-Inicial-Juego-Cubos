@@ -37,7 +37,7 @@ public partial class PlayerInteraction : MonoBehaviour
 
 
     // =========================================================
-    // PROPIEDAD PÚBLICA
+    // PROPIEDAD Pï¿½BLICA
     // =========================================================
 
     public bool IsHoldingBlock =>
@@ -51,7 +51,7 @@ public partial class PlayerInteraction : MonoBehaviour
     private void Update()
     {
         // -----------------------------------------------------
-        // SI ESTÁ SOSTENIENDO UN BLOQUE
+        // SI ESTï¿½ SOSTENIENDO UN BLOQUE
         // -----------------------------------------------------
 
         if (heldObject != null)
@@ -144,7 +144,7 @@ public partial class PlayerInteraction : MonoBehaviour
 
 
         // =====================================================
-        // POSICIÓN SEGURA
+        // POSICIï¿½N SEGURA
         // =====================================================
 
         Vector3 safePosition =
@@ -181,4 +181,9 @@ public partial class PlayerInteraction : MonoBehaviour
             actualMovement
         );
     }
+
+    public void SetPlayerCamera(Camera newCamera)
+{
+    playerCamera = newCamera;
+}
 }

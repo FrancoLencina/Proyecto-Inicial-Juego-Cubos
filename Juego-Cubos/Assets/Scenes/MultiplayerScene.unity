@@ -942,7 +942,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 255132126}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &255132129
 Camera:
   m_ObjectHideFlags: 0
@@ -1961,7 +1961,7 @@ MonoBehaviour:
     Address: 127.0.0.1
     Port: 7777
     WebSocketPath: /
-    ServerListenAddress: 
+    ServerListenAddress: 127.0.0.1
     ClientBindPort: 0
   DebugSimulator:
     PacketDelayMS: 0
@@ -1983,7 +1983,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 914591831}
-    PlayerPrefab: {fileID: 0}
+    PlayerPrefab: {fileID: 4006211671612427899, guid: 2f8662662be4b814285b1a8ccb7a1f52, type: 3}
     Prefabs:
       NetworkPrefabsLists: []
     TickRate: 30
