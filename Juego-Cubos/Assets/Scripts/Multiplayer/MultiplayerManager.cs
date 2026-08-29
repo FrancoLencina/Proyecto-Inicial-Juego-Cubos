@@ -17,11 +17,17 @@ public class MultiplayerManager : MonoBehaviour
     // Evento que avisa a la UI cuando el Host cerró la sala
     public event Action SessionClosed;
 
+    // Último error ocurrido al intentar unirse
+    public string LastJoinError { get; private set; }
+
     public bool IsHost => currentSession != null;
 
     private async void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (
+            Instance != null &&
+            Instance != this
+        )
         {
             Destroy(gameObject);
             return;
@@ -41,15 +47,25 @@ public class MultiplayerManager : MonoBehaviour
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
-                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                await AuthenticationService.Instance
+                    .SignInAnonymouslyAsync();
             }
 
-            Debug.Log("Unity Services inicializado correctamente.");
-            Debug.Log("Player ID: " + AuthenticationService.Instance.PlayerId);
+            Debug.Log(
+                "Unity Services inicializado correctamente."
+            );
+
+            Debug.Log(
+                "Player ID: " +
+                AuthenticationService.Instance.PlayerId
+            );
         }
         catch (Exception e)
         {
-            Debug.LogError("Error inicializando Unity Services: " + e);
+            Debug.LogError(
+                "Error inicializando Unity Services: " +
+                e
+            );
         }
     }
 
@@ -67,18 +83,27 @@ public class MultiplayerManager : MonoBehaviour
             }.WithRelayNetwork();
 
             currentSession =
-                await MultiplayerService.Instance.CreateSessionAsync(options);
+                await MultiplayerService.Instance
+                    .CreateSessionAsync(options);
 
-            string code = currentSession.Code;
+            string code =
+                currentSession.Code;
 
             Debug.Log("Sala creada.");
-            Debug.Log("Código de sala: " + code);
+            Debug.Log(
+                "Código de sala: " +
+                code
+            );
 
             return code;
         }
         catch (Exception e)
         {
-            Debug.LogError("Error creando la sala: " + e);
+            Debug.LogError(
+                "Error creando la sala: " +
+                e
+            );
+
             return null;
         }
     }
@@ -89,33 +114,112 @@ public class MultiplayerManager : MonoBehaviour
 
     public async Task<bool> JoinRoom(string code)
     {
+        // Valor por defecto
+        LastJoinError =
+            "No se pudo conectar a la sala.";
+
         try
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                Debug.LogError("El código está vacío.");
+                LastJoinError =
+                    "Código vacío.";
+
+                Debug.LogError(
+                    "El código está vacío."
+                );
+
                 return false;
             }
 
-            var options = new JoinSessionOptions();
+            var options =
+                new JoinSessionOptions();
 
             joinedSession =
-                await MultiplayerService.Instance.JoinSessionByCodeAsync(
-                    code.ToUpper(),
-                    options
-                );
+                await MultiplayerService.Instance
+                    .JoinSessionByCodeAsync(
+                        code.ToUpper(),
+                        options
+                    );
 
             // Escuchar cuando el Host elimina/cierra la sesión
-            joinedSession.Deleted += OnSessionDeleted;
+            joinedSession.Deleted +=
+                OnSessionDeleted;
 
-            Debug.Log("Se encontró la sala.");
-            Debug.Log("Conectado a la sala: " + joinedSession.Code);
+            Debug.Log(
+                "Se encontró la sala."
+            );
+
+            Debug.Log(
+                "Conectado a la sala: " +
+                joinedSession.Code
+            );
+
+            // No hay error
+            LastJoinError = null;
 
             return true;
         }
         catch (Exception e)
         {
-            Debug.LogError("Error uniéndose a la sala: " + e);
+            Debug.LogError(
+                "Error uniéndose a la sala:"
+            );
+
+            // IMPORTANTE:
+            // Esto permite ver el error técnico
+            // completo en la Console de Unity.
+            Debug.LogError(
+                e.ToString()
+            );
+
+            joinedSession = null;
+
+            // Obtener mensaje para el jugador
+            string errorMessage =
+                e.Message.ToLower();
+
+            // =========================
+            // CÓDIGO INVÁLIDO
+            // =========================
+
+            if (
+                errorMessage.Contains("not found") ||
+                errorMessage.Contains("does not exist") ||
+                errorMessage.Contains("invalid")
+            )
+            {
+                LastJoinError =
+                    "Código inválido.";
+            }
+
+            // =========================
+            // PROBLEMA DE CONEXIÓN
+            // =========================
+
+            else if (
+                errorMessage.Contains("network") ||
+                errorMessage.Contains("connection") ||
+                errorMessage.Contains("timeout") ||
+                errorMessage.Contains("service") ||
+                errorMessage.Contains("authentication") ||
+                errorMessage.Contains("internet")
+            )
+            {
+                LastJoinError =
+                    "Problema de conexión con el servicio.";
+            }
+
+            // =========================
+            // OTRO ERROR
+            // =========================
+
+            else
+            {
+                LastJoinError =
+                    "No se pudo conectar a la sala.";
+            }
+
             return false;
         }
     }
@@ -126,7 +230,9 @@ public class MultiplayerManager : MonoBehaviour
 
     private void OnSessionDeleted()
     {
-        Debug.Log("La sesión fue eliminada por el Host.");
+        Debug.Log(
+            "La sesión fue eliminada por el Host."
+        );
 
         joinedSession = null;
 
@@ -159,7 +265,8 @@ public class MultiplayerManager : MonoBehaviour
 
     public bool HasActiveSession()
     {
-        return currentSession != null || joinedSession != null;
+        return currentSession != null ||
+               joinedSession != null;
     }
 
     // =========================
@@ -176,14 +283,18 @@ public class MultiplayerManager : MonoBehaviour
 
             if (currentSession != null)
             {
-                Debug.Log("El Host está cerrando la sala...");
+                Debug.Log(
+                    "El Host está cerrando la sala..."
+                );
 
                 // El Host elimina completamente la sesión.
                 await currentSession.DeleteAsync();
 
                 currentSession = null;
 
-                Debug.Log("Sala eliminada correctamente.");
+                Debug.Log(
+                    "Sala eliminada correctamente."
+                );
             }
 
             // =========================
@@ -193,28 +304,36 @@ public class MultiplayerManager : MonoBehaviour
             if (joinedSession != null)
             {
                 // Dejar de escuchar el evento
-                joinedSession.Deleted -= OnSessionDeleted;
+                joinedSession.Deleted -=
+                    OnSessionDeleted;
 
                 await joinedSession.LeaveAsync();
 
                 joinedSession = null;
 
-                Debug.Log("Cliente abandonó la sala.");
+                Debug.Log(
+                    "Cliente abandonó la sala."
+                );
             }
 
             // =========================
             // NETCODE
             // =========================
 
-            if (NetworkManager.Singleton != null &&
-                NetworkManager.Singleton.IsListening)
+            if (
+                NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.IsListening
+            )
             {
                 NetworkManager.Singleton.Shutdown();
             }
         }
         catch (Exception e)
         {
-            Debug.LogError("Error saliendo de la sala: " + e);
+            Debug.LogError(
+                "Error saliendo de la sala: " +
+                e
+            );
 
             // Limpiar referencias aunque haya ocurrido un error
             currentSession = null;
@@ -230,7 +349,8 @@ public class MultiplayerManager : MonoBehaviour
     {
         if (joinedSession != null)
         {
-            joinedSession.Deleted -= OnSessionDeleted;
+            joinedSession.Deleted -=
+                OnSessionDeleted;
         }
 
         currentSession = null;
@@ -245,20 +365,28 @@ public class MultiplayerManager : MonoBehaviour
     {
         if (NetworkManager.Singleton == null)
         {
-            Debug.LogError("No existe NetworkManager.");
+            Debug.LogError(
+                "No existe NetworkManager."
+            );
+
             return;
         }
 
         if (!NetworkManager.Singleton.IsHost)
         {
-            Debug.LogWarning("Solo el Host puede comenzar la partida.");
+            Debug.LogWarning(
+                "Solo el Host puede comenzar la partida."
+            );
+
             return;
         }
 
-        Debug.Log("Comenzando partida...");
+        Debug.Log(
+            "Comenzando partida..."
+        );
 
         NetworkManager.Singleton.SceneManager.LoadScene(
-            "Game",
+            "MapScene",
             LoadSceneMode.Single
         );
     }

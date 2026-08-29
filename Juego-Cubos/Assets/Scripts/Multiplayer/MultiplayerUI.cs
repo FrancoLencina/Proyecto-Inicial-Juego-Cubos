@@ -12,6 +12,9 @@ public class MultiplayerUI : MonoBehaviour
     [SerializeField] private TMP_InputField joinCodeInput;
     [SerializeField] private Button confirmJoinButton;
 
+    [Header("Join Errors")]
+    [SerializeField] private TMP_Text invalidCodeText;
+
     [Header("Room")]
     [SerializeField] private GameObject roomPanel;
     [SerializeField] private TMP_Text roomCodeText;
@@ -31,6 +34,9 @@ public class MultiplayerUI : MonoBehaviour
         joinCodeInput.gameObject.SetActive(false);
         confirmJoinButton.gameObject.SetActive(false);
 
+        // Mensaje de error oculto
+        invalidCodeText.gameObject.SetActive(false);
+
         // Eventos
         createRoomButton.onClick.AddListener(CreateRoom);
         joinRoomButton.onClick.AddListener(ShowJoinMenu);
@@ -39,12 +45,20 @@ public class MultiplayerUI : MonoBehaviour
         leaveRoomButton.onClick.AddListener(LeaveRoom);
         startGameButton.onClick.AddListener(StartGame);
 
+        // Ocultar mensaje de error cuando se escribe
+        joinCodeInput.onValueChanged.AddListener(OnJoinCodeChanged);
+
         // Escuchar cuando el Host cierra la sala
         MultiplayerManager.Instance.SessionClosed += OnSessionClosed;
     }
 
     private void OnDestroy()
     {
+        if (joinCodeInput != null)
+        {
+            joinCodeInput.onValueChanged.RemoveListener(OnJoinCodeChanged);
+        }
+
         if (MultiplayerManager.Instance != null)
         {
             MultiplayerManager.Instance.SessionClosed -= OnSessionClosed;
@@ -114,7 +128,8 @@ public class MultiplayerUI : MonoBehaviour
             int players =
                 MultiplayerManager.Instance.GetPlayerCount();
 
-            playersText.text = $"Jugadores: {players}/2";
+            playersText.text =
+                $"Jugadores: {players}/2";
 
             // =========================
             // HOST
@@ -124,12 +139,16 @@ public class MultiplayerUI : MonoBehaviour
             {
                 if (players >= 2)
                 {
-                    statusText.text = "¡Jugador conectado!";
+                    statusText.text =
+                        "¡Jugador conectado!";
+
                     startGameButton.interactable = true;
                 }
                 else
                 {
-                    statusText.text = "Esperando otro jugador...";
+                    statusText.text =
+                        "Esperando otro jugador...";
+
                     startGameButton.interactable = false;
                 }
             }
@@ -140,7 +159,9 @@ public class MultiplayerUI : MonoBehaviour
 
             else
             {
-                statusText.text = "Esperando al anfitrión...";
+                statusText.text =
+                    "Esperando al anfitrión...";
+
                 startGameButton.interactable = false;
             }
 
@@ -156,25 +177,33 @@ public class MultiplayerUI : MonoBehaviour
 
     private void OnSessionClosed()
     {
-        Debug.Log("El Host cerró la sala.");
+        Debug.Log(
+            "El Host cerró la sala."
+        );
 
         // Detener cualquier actualización
         updatingRoom = false;
 
         // Mostrar mensaje antes de volver al menú
-        statusText.text = "El anfitrión cerró la sala.";
+        statusText.text =
+            "El anfitrión cerró la sala.";
 
         playersText.text = "";
 
         // Desconectar Netcode
-        if (Unity.Netcode.NetworkManager.Singleton != null &&
-            Unity.Netcode.NetworkManager.Singleton.IsListening)
+        if (
+            Unity.Netcode.NetworkManager.Singleton != null &&
+            Unity.Netcode.NetworkManager.Singleton.IsListening
+        )
         {
             Unity.Netcode.NetworkManager.Singleton.Shutdown();
         }
 
         // Volver al menú después de un pequeño momento
-        Invoke(nameof(ReturnToMenuAfterHostClosed), 1.5f);
+        Invoke(
+            nameof(ReturnToMenuAfterHostClosed),
+            1.5f
+        );
     }
 
     private void ReturnToMenuAfterHostClosed()
@@ -185,12 +214,12 @@ public class MultiplayerUI : MonoBehaviour
         createRoomButton.interactable = true;
         joinRoomButton.interactable = true;
 
-        // Muy importante:
-        // volver a habilitar el botón de confirmar
         confirmJoinButton.interactable = true;
 
         joinCodeInput.gameObject.SetActive(false);
         confirmJoinButton.gameObject.SetActive(false);
+
+        HideJoinError();
 
         roomCodeText.text = "";
         playersText.text = "";
@@ -229,6 +258,8 @@ public class MultiplayerUI : MonoBehaviour
         confirmJoinButton.gameObject.SetActive(false);
         confirmJoinButton.interactable = true;
 
+        HideJoinError();
+
         roomCodeText.text = "";
         playersText.text = "";
         statusText.text = "";
@@ -256,9 +287,42 @@ public class MultiplayerUI : MonoBehaviour
 
         confirmJoinButton.interactable = true;
 
+        HideJoinError();
+
         joinCodeInput.text = "";
         joinCodeInput.Select();
         joinCodeInput.ActivateInputField();
+    }
+
+    // =========================
+    // CAMBIO EN EL INPUT
+    // =========================
+
+    private void OnJoinCodeChanged(string value)
+    {
+        HideJoinError();
+    }
+
+    // =========================
+    // MOSTRAR ERROR
+    // =========================
+
+    private void ShowJoinError(string message)
+    {
+        invalidCodeText.text = message;
+        invalidCodeText.gameObject.SetActive(true);
+    }
+
+    // =========================
+    // OCULTAR ERROR
+    // =========================
+
+    private void HideJoinError()
+    {
+        if (invalidCodeText != null)
+        {
+            invalidCodeText.gameObject.SetActive(false);
+        }
     }
 
     // =========================
@@ -270,40 +334,66 @@ public class MultiplayerUI : MonoBehaviour
         string code =
             joinCodeInput.text.Trim().ToUpper();
 
+        // =========================
+        // CÓDIGO VACÍO
+        // =========================
+
         if (string.IsNullOrEmpty(code))
         {
-            Debug.LogWarning("Ingresá un código.");
+            ShowJoinError(
+                "Código vacío."
+            );
+
             return;
         }
 
+        HideJoinError();
+
         confirmJoinButton.interactable = false;
 
-        statusText.text = "Buscando sala...";
+        statusText.text =
+            "Buscando sala...";
 
         bool success =
             await MultiplayerManager.Instance.JoinRoom(code);
+
+        // =========================
+        // CONEXIÓN EXITOSA
+        // =========================
 
         if (success)
         {
             createJoinPanel.SetActive(false);
             roomPanel.SetActive(true);
 
-            roomCodeText.text = "Código: " + code;
+            roomCodeText.text =
+                "Código: " + code;
 
-            playersText.text = "Jugadores: 2/2";
-            statusText.text = "Esperando al anfitrión...";
+            playersText.text =
+                "Jugadores: 2/2";
+
+            statusText.text =
+                "Esperando al anfitrión...";
 
             // El cliente nunca puede iniciar
             startGameButton.interactable = false;
 
             StartRoomUpdater();
         }
+
+        // =========================
+        // ERROR
+        // =========================
+
         else
         {
-            statusText.text = "No se encontró la sala.";
+            ShowJoinError(
+                MultiplayerManager.Instance.LastJoinError
+            );
 
             // Puede volver a intentar
             confirmJoinButton.interactable = true;
         }
     }
 }
+
