@@ -6,7 +6,7 @@ public class PlayerNetworkSetup : NetworkBehaviour
 {
     [Header("Player Components")]
     [SerializeField] private PlayerMovement playerMovement;
-    [SerializeField] private PlayerInteraction playerInteraction;
+    [SerializeField] private NetworkPlayerInteraction networkPlayerInteraction;
 
     [Header("Player Vision")]
     [SerializeField] private GameObject playerVision;
@@ -156,28 +156,50 @@ public class PlayerNetworkSetup : NetworkBehaviour
 
 
         // =====================================================
-        // PLAYER INTERACTION
+        // HOLD POINT
         // =====================================================
 
-        if (playerInteraction == null)
+        Transform holdPoint =
+            playerVision.transform.Find("Hold Point");
+
+        if (holdPoint == null)
         {
-            playerInteraction =
-                GetComponent<PlayerInteraction>();
+            Debug.LogError(
+                "PlayerNetworkSetup: " +
+                "No se encontró Hold Point dentro de PlayerVision."
+            );
+
+            return;
         }
 
-        if (playerInteraction != null)
-        {
-            playerInteraction.enabled = true;
 
-            playerInteraction.SetPlayerCamera(
+        // =====================================================
+        // NETWORK PLAYER INTERACTION
+        // =====================================================
+
+        if (networkPlayerInteraction == null)
+        {
+            networkPlayerInteraction =
+                GetComponent<NetworkPlayerInteraction>();
+        }
+
+        if (networkPlayerInteraction != null)
+        {
+            networkPlayerInteraction.enabled = true;
+
+            networkPlayerInteraction.SetPlayerCamera(
                 visionCamera
+            );
+
+            networkPlayerInteraction.SetHoldPoint(
+                holdPoint
             );
         }
         else
         {
             Debug.LogError(
                 "PlayerNetworkSetup: " +
-                "No se encontró PlayerInteraction en el Player."
+                "No se encontró NetworkPlayerInteraction en el Player."
             );
 
             return;
@@ -198,8 +220,8 @@ public class PlayerNetworkSetup : NetworkBehaviour
         // en la escena.
         // =====================================================
 
-       PlayerCamera cameraController =
-    FindAnyObjectByType<PlayerCamera>();
+        PlayerCamera cameraController =
+            FindAnyObjectByType<PlayerCamera>();
 
         if (cameraController == null)
         {

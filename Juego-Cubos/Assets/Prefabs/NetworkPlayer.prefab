@@ -104,10 +104,10 @@ GameObject:
   - component: {fileID: 4965848522268285331}
   - component: {fileID: 1649808958679449301}
   - component: {fileID: 6070869279838661611}
-  - component: {fileID: 5341463762099294650}
   - component: {fileID: 4516973383814175726}
   - component: {fileID: -8566247756362540240}
   - component: {fileID: -5577838748402836159}
+  - component: {fileID: 5740501286645353597}
   m_Layer: 9
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -261,31 +261,6 @@ MonoBehaviour:
   groundCheckHeight: 0
   groundCheckRadius: 0.25
   groundCheckDistance: 1
---- !u!114 &5341463762099294650
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4006211671612427899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2fab4a3368ceb0942ba9078aa9aba210, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  playerCamera: {fileID: 615252380546096797}
-  fruitBlockLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  holdPoint: {fileID: 8023107354669244637}
-  heldBlockBlockingLayers:
-    serializedVersion: 2
-    m_Bits: 257
-  slopeNormalThreshold: 0.5
-  maxRotationCorrection: 0.25
-  rotationCorrectionStep: 0.01
-  rotationSamples: 30
-  pushForce: 3
 --- !u!114 &4516973383814175726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -298,7 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 984791854
+  GlobalObjectIdHash: 2028869389
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -373,8 +348,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkSetup
   ShowTopMostFoldoutHeaderGroup: 1
   playerMovement: {fileID: 6070869279838661611}
-  playerInteraction: {fileID: 5341463762099294650}
+  networkPlayerInteraction: {fileID: 0}
   playerVision: {fileID: 4249321013474277945}
+--- !u!114 &5740501286645353597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4006211671612427899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e984555ed8966984587594750fae7c5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerInteraction
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerCamera: {fileID: 615252380546096797}
+  fruitBlockLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  holdPoint: {fileID: 8023107354669244637}
+  interactionDistance: 3
+  interactionRadius: 0.18
+  holdPositionSpeed: 20
 --- !u!1 &4249321013474277945
 GameObject:
   m_ObjectHideFlags: 0

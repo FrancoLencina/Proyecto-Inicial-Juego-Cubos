@@ -16,6 +16,23 @@ public class NetworkFruitBlock : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+private NetworkVariable<bool> isBeingHeld =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+private NetworkVariable<ulong> holderClientId =
+    new NetworkVariable<ulong>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+public bool IsBeingHeld => isBeingHeld.Value;
+
+public ulong HolderClientId => holderClientId.Value;
     public FruitData FruitData
     {
         get
@@ -195,4 +212,15 @@ public class NetworkFruitBlock : NetworkBehaviour
             + fruit.FruitType
         );
     }
+
+    public void SetHeldState(
+    bool held,
+    ulong clientId)
+{
+    if (!IsServer)
+        return;
+
+    isBeingHeld.Value = held;
+    holderClientId.Value = clientId;
+}
 }

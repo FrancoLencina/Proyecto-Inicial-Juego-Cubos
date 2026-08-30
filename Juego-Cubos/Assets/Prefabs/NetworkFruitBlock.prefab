@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 5791014815111854449}
   - component: {fileID: -906376062212618244}
   - component: {fileID: 7833522896459191858}
+  - component: {fileID: 9129005629623648505}
   m_Layer: 6
   m_Name: NetworkFruitBlock
   m_TagString: Untagged
@@ -155,7 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 95903961
+  GlobalObjectIdHash: 760937611
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -250,3 +251,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: aefcacd2f2bd84e42b1a0d969ad21fd5, type: 2}
   - {fileID: 11400000, guid: 9bdc1ab3a69d5ea47a51e8762fa0699d, type: 2}
   - {fileID: 11400000, guid: f43060ec4e04e5642ac9543dcf4331ce, type: 2}
+--- !u!114 &9129005629623648505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5479794973105043174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e22f7173743d55488d58a2803454d18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeldBlockCollision
