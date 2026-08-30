@@ -298,7 +298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2263382944
+  GlobalObjectIdHash: 984791854
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -374,6 +374,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   playerMovement: {fileID: 6070869279838661611}
   playerInteraction: {fileID: 5341463762099294650}
+  playerVision: {fileID: 4249321013474277945}
 --- !u!1 &4249321013474277945
 GameObject:
   m_ObjectHideFlags: 0
