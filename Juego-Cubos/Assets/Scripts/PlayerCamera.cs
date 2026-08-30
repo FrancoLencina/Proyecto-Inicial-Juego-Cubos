@@ -134,4 +134,29 @@ public class PlayerCamera : MonoBehaviour
             Vector3.up * height
         );
     }
+
+    // =========================================================
+// ASIGNAR PLAYER
+// =========================================================
+
+public void SetPlayer(Transform newPlayer)
+{
+    if (newPlayer == null)
+    {
+        Debug.LogWarning(
+            "PlayerCamera: se intentó asignar un Player nulo."
+        );
+
+        return;
+    }
+
+    player = newPlayer;
+
+    playerMovement =
+        player.GetComponent<PlayerMovement>();
+
+    Debug.Log(
+        "PlayerCamera: Player asignado correctamente."
+    );
+}
 }
