@@ -53,7 +53,7 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = velocity;
 
-         // Gravedad adicional
+        // Gravedad adicional
         if (!isGrounded)
         {
             rb.AddForce(
