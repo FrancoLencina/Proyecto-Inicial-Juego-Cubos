@@ -8,7 +8,7 @@ public class BlockSpawner : MonoBehaviour
 
     [SerializeField] private int blocksPerFruit = 2;
 
-    [SerializeField] private BoxCollider spawnArea;
+    [SerializeField] private Collider spawnArea;
 
     private void Start()
     {
@@ -30,7 +30,7 @@ public class BlockSpawner : MonoBehaviour
     {
         Vector3 spawnPosition = GetRandomSpawnPosition();
 
-        Debug.Log("Generando " + fruit.DisplayName + " en posición: " + spawnPosition);
+        Debug.Log("Generando " + fruit.DisplayName + " en posiciï¿½n: " + spawnPosition);
 
         FruitBlock newBlock = Instantiate(
             fruitBlockPrefab,
