@@ -12,8 +12,10 @@ GameObject:
   - component: {fileID: 7056589238409413339}
   - component: {fileID: 2044602509135034876}
   - component: {fileID: 2807501490663136164}
-  - component: {fileID: 4827448107584641408}
   - component: {fileID: 1092746173654338208}
+  - component: {fileID: 5791014815111854449}
+  - component: {fileID: -906376062212618244}
+  - component: {fileID: 7833522896459191858}
   m_Layer: 6
   m_Name: NetworkFruitBlock
   m_TagString: Untagged
@@ -114,19 +116,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4827448107584641408
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5479794973105043174}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a36d3b5ba9aaeb4f9478e57ae7d28e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FruitBlock
-  fruitData: {fileID: 11400000, guid: a1f4f81ff03a91d44bb69656a1f4220a, type: 2}
 --- !u!54 &1092746173654338208
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -154,3 +143,110 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 2
+--- !u!114 &5791014815111854449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5479794973105043174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 95903961
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &-906376062212618244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5479794973105043174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!114 &7833522896459191858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5479794973105043174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db3cd4746448efd4484fdcc97fb99321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkFruitBlock
+  ShowTopMostFoldoutHeaderGroup: 1
+  availableFruits:
+  - {fileID: 11400000, guid: c3415e7461915d8419fcc50c6b22e234, type: 2}
+  - {fileID: 11400000, guid: a1f4f81ff03a91d44bb69656a1f4220a, type: 2}
+  - {fileID: 11400000, guid: da26d8cc573971b4a8c24e76247ef367, type: 2}
+  - {fileID: 11400000, guid: 813c2aadf2c651646a0d5eca610aa0da, type: 2}
+  - {fileID: 11400000, guid: da34fbbc5b38bd24d8ad5e8917500dc8, type: 2}
+  - {fileID: 11400000, guid: 0c893ddb3d531c641b24c55cf041bbfb, type: 2}
+  - {fileID: 11400000, guid: 1b07e022d2a642243a4b4dae8173d7c1, type: 2}
+  - {fileID: 11400000, guid: 86ebe3791e617c24093e932870887366, type: 2}
+  - {fileID: 11400000, guid: 38b7a81a9d93a134fa322ecc28e81dae, type: 2}
+  - {fileID: 11400000, guid: 7979f26bd6c284d4ba8e674e5df0f8c8, type: 2}
+  - {fileID: 11400000, guid: e6b371043d09d6d4b98fd40baf985964, type: 2}
+  - {fileID: 11400000, guid: 6126c2811ca4d924f9ccbdcc1cd7faa4, type: 2}
+  - {fileID: 11400000, guid: cffde1b8ca2d22246b65cb3922a7ed97, type: 2}
+  - {fileID: 11400000, guid: d7669ce34c36bb449b507ef81aa1be37, type: 2}
+  - {fileID: 11400000, guid: 6c5045ec63f68e84dad183c4a44fa898, type: 2}
+  - {fileID: 11400000, guid: 017e0a808f72fac4fa592967cf2b28aa, type: 2}
+  - {fileID: 11400000, guid: 6c75667828b750d4a9b985dcd3525783, type: 2}
+  - {fileID: 11400000, guid: aefcacd2f2bd84e42b1a0d969ad21fd5, type: 2}
+  - {fileID: 11400000, guid: 9bdc1ab3a69d5ea47a51e8762fa0699d, type: 2}
+  - {fileID: 11400000, guid: f43060ec4e04e5642ac9543dcf4331ce, type: 2}
