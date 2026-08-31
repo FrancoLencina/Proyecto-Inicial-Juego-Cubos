@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class TargetZone : MonoBehaviour
 {
@@ -28,13 +29,14 @@ public class TargetZone : MonoBehaviour
             {
                 fruitBlocksInside.RemoveAt(i);
 
-                Debug.Log("FruitBlock salió de la zona: " + fruitBlock.FruitData.DisplayName);
+                Debug.Log("FruitBlock saliï¿½ de la zona: " + fruitBlock.FruitData.DisplayName);
             }
         }
 
         if (IsCorrectStack())
         {
-            Debug.Log("¡Apilamiento correcto!");
+            Debug.Log("ï¿½Apilamiento correcto!");
+            SceneManager.LoadScene("EndScene");
         }
     }
 
@@ -46,7 +48,7 @@ public class TargetZone : MonoBehaviour
         {
             fruitBlocksInside.Add(fruitBlock);
 
-            Debug.Log("FruitBlock entró en la zona: " + fruitBlock.FruitData.DisplayName);
+            Debug.Log("FruitBlock entrï¿½ en la zona: " + fruitBlock.FruitData.DisplayName);
         }
     }
 
@@ -58,7 +60,7 @@ public class TargetZone : MonoBehaviour
         {
             fruitBlocksInside.Remove(fruitBlock);
 
-            Debug.Log("FruitBlock salió de la zona: " + fruitBlock.FruitData.DisplayName);
+            Debug.Log("FruitBlock saliï¿½ de la zona: " + fruitBlock.FruitData.DisplayName);
         }
     }
 
