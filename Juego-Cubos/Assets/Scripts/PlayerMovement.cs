@@ -8,6 +8,8 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce = 7f;
     public float gravityMultiplier = 2f;
 
+    public Animator animator;
+
     private Rigidbody rb;
     private Vector3 movement;
     private bool isGrounded;
@@ -43,6 +45,23 @@ public class PlayerMovement : MonoBehaviour
             isGrounded = false;
         }
     }
+
+
+    // =========================================================
+    // SOLICITAR ROTACIÓN
+    // =========================================================
+
+    public void RequestRotation(float rotation)
+    {
+        Debug.Log("Rotación recibida: " + rotation);
+
+        pendingRotation += rotation;
+    }
+
+
+    // =========================================================
+    // FIXED UPDATE
+    // =========================================================
 
     void FixedUpdate()
     {
