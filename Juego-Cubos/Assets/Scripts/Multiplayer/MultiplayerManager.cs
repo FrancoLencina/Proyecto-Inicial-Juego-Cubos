@@ -6,6 +6,7 @@ using Unity.Netcode;
 using Unity.Services.Core;
 using Unity.Services.Authentication;
 using Unity.Services.Multiplayer;
+using System.Transactions;
 
 public class MultiplayerManager : MonoBehaviour
 {
@@ -85,6 +86,9 @@ public class MultiplayerManager : MonoBehaviour
             currentSession =
                 await MultiplayerService.Instance
                     .CreateSessionAsync(options);
+
+            // DEBUG: comprobar si el creador quedó como Host
+            Debug.Log("IsHost = " + IsHost);
 
             string code =
                 currentSession.Code;
