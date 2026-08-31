@@ -34,25 +34,6 @@ private void Start()
         multiPlayerButton.onClick.AddListener(StartMultiPlayer);
         }
     }
-
-
-// =========================================================
-// ON DESTROY
-// =========================================================
-
-void OnDestroy()
-{
-
-    if (singlePlayerButton != null)
-    {
-        singlePlayerButton.onClick.RemoveListener(StartSinglePlayer);
-    }
-        if (multiPlayerButton != null)
-    {
-        multiPlayerButton.onClick.RemoveListener(StartMultiPlayer);
-    }
-}
-
 // =========================================================
 // INICIAR MODO CONTRARELOJ / SINGLEPLAYER
 // =========================================================
