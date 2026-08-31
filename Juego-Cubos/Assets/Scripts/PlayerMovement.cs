@@ -37,6 +37,12 @@ public class PlayerMovement : MonoBehaviour
             vertical = 1f;
 
         movement = new Vector3(horizontal, 0f, vertical).normalized;
+        animator.SetFloat("VelX", horizontal);
+        animator.SetFloat("VelY", vertical);
+
+        movement =
+            transform.right * horizontal +
+            transform.forward * vertical;
 
         // Salto
         if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
