@@ -8,6 +8,8 @@ public class SequenceUI : MonoBehaviour
 
     public void DisplaySequence(FruitData[] sequence)
     {
+        ClearSequence();
+
         for (int i = sequence.Length - 1; i >= 0; i--)
         {
             GameObject fruitObject = Instantiate(
@@ -15,9 +17,18 @@ public class SequenceUI : MonoBehaviour
                 container
             );
 
-            Image image = fruitObject.GetComponent<Image>();
+            Image image =
+                fruitObject.GetComponent<Image>();
 
             image.sprite = sequence[i].Image;
+        }
+    }
+
+    private void ClearSequence()
+    {
+        for (int i = container.childCount - 1; i >= 0; i--)
+        {
+            Destroy(container.GetChild(i).gameObject);
         }
     }
 }
