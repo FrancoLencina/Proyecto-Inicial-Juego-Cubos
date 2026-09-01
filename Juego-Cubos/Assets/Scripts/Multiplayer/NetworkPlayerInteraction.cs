@@ -100,9 +100,9 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        // El servidor controla el movimiento
-        // del bloque.
-        if (!IsServer)
+        // Solo el jugador propietario del Player
+        // controla la interacción.
+        if (!IsOwner)
             return;
 
         if (heldBlock == null)
@@ -112,22 +112,24 @@ public class NetworkPlayerInteraction : NetworkBehaviour
             return;
 
 
-        Rigidbody blockRigidbody =
-            heldBlock.GetComponent<Rigidbody>();
-
-        if (blockRigidbody == null)
+        // El bloque debe pertenecer a este cliente.
+        if (!heldBlock.NetworkObject.IsOwner)
             return;
 
 
         // -----------------------------------------------------
-        // POSICIÓN EXACTA DEL HOLD POINT
+        // MOVER BLOQUE
         // -----------------------------------------------------
 
-        blockRigidbody.position =
-            holdPoint.position;
+        // El bloque es Kinematic mientras está agarrado.
+        //
+        // Lo movemos directamente al HoldPoint para evitar
+        // fuerzas físicas que puedan empujar otros bloques.
 
-        blockRigidbody.rotation =
-            holdPoint.rotation;
+        heldBlock.transform.SetPositionAndRotation(
+            holdPoint.position,
+            holdPoint.rotation
+        );
     }
 
 
@@ -137,7 +139,8 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
     [ServerRpc]
     private void RequestGrabServerRpc(
-        NetworkObjectReference blockReference)
+        NetworkObjectReference blockReference,
+        ServerRpcParams rpcParams = default)
     {
         // -----------------------------------------------------
         // BUSCAR NETWORK OBJECT
@@ -170,13 +173,11 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
 
         // -----------------------------------------------------
-        // EVITAR DOS BLOQUES A LA VEZ
+        // CLIENTE QUE INTENTA AGARRAR
         // -----------------------------------------------------
 
-        if (heldBlock != null)
-        {
-            return;
-        }
+        ulong grabbingClientId =
+            rpcParams.Receive.SenderClientId;
 
 
         // -----------------------------------------------------
@@ -190,70 +191,61 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
 
         // -----------------------------------------------------
-        // AGARRAR
+        // DETENER FÍSICA ANTES DE TRANSFERIR OWNERSHIP
         // -----------------------------------------------------
 
-        heldBlock = block;
-
-        block.SetHeldState(
-            true,
-            OwnerClientId
-        );
-
-
-        // -----------------------------------------------------
-        // DESACTIVAR FÍSICA
-        // -----------------------------------------------------
-
-        Rigidbody blockRigidbody =
-            block.GetComponent<Rigidbody>();
-
-        if (blockRigidbody != null)
-        {
-            blockRigidbody.linearVelocity =
-                Vector3.zero;
-
-            blockRigidbody.angularVelocity =
-                Vector3.zero;
-
-            blockRigidbody.isKinematic =
-                true;
-        }
-
-
-        // -----------------------------------------------------
-        // IGNORAR COLISIÓN CON EL PLAYER
-        // -----------------------------------------------------
-
-        IgnorePlayerBlockCollision(
+        SetBlockPhysics(
             block,
             true
         );
 
 
-        // Aplicar también la modificación
-        // en el cliente propietario.
-        SetPlayerBlockCollisionClientRpc(
+        // -----------------------------------------------------
+        // MARCAR COMO SOSTENIDO
+        // -----------------------------------------------------
+
+        block.SetHeldState(
+            true,
+            grabbingClientId
+        );
+
+
+        // -----------------------------------------------------
+        // TRANSFERIR OWNERSHIP
+        // -----------------------------------------------------
+
+        block.NetworkObject.ChangeOwnership(
+            grabbingClientId
+        );
+
+
+        // -----------------------------------------------------
+        // INFORMAR FÍSICA A TODOS LOS CLIENTES
+        // -----------------------------------------------------
+
+        SetBlockPhysicsClientRpc(
             block.NetworkObject,
-            true
+            true,
+            grabbingClientId
+        );
+
+
+        // -----------------------------------------------------
+        // INFORMAR QUIÉN TIENE EL BLOQUE
+        // -----------------------------------------------------
+
+        SetHeldBlockClientRpc(
+            block.NetworkObject,
+            grabbingClientId
         );
 
 
         Debug.Log(
             "[NetworkPlayerInteraction] " +
             "Cliente " +
-            OwnerClientId +
+            grabbingClientId +
             " agarró " +
             block.FruitType
-        );
-
-
-        // -----------------------------------------------------
-        // INFORMAR A LOS CLIENTES
-        // -----------------------------------------------------
-
-        SetHeldBlockClientRpc(
-            block.NetworkObject
         );
     }
 
@@ -263,16 +255,52 @@ public class NetworkPlayerInteraction : NetworkBehaviour
     // =========================================================
 
     [ServerRpc]
-    private void RequestDropServerRpc()
+    private void RequestDropServerRpc(
+        ServerRpcParams rpcParams = default)
     {
-        if (heldBlock == null)
-            return;
+        ulong senderClientId =
+            rpcParams.Receive.SenderClientId;
 
+
+        // -----------------------------------------------------
+        // BUSCAR BLOQUE DEL JUGADOR
+        // -----------------------------------------------------
 
         NetworkFruitBlock block =
-            heldBlock;
+            FindHeldBlockByClientId(
+                senderClientId
+            );
 
-        heldBlock = null;
+
+        if (block == null)
+        {
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // VALIDAR HOLDER
+        // -----------------------------------------------------
+
+        if (!block.IsBeingHeld)
+        {
+            return;
+        }
+
+
+        if (block.HolderClientId != senderClientId)
+        {
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // DEVOLVER OWNERSHIP AL SERVIDOR
+        // -----------------------------------------------------
+
+        block.NetworkObject.ChangeOwnership(
+            NetworkManager.ServerClientId
+        );
 
 
         // -----------------------------------------------------
@@ -286,48 +314,181 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
 
         // -----------------------------------------------------
-        // RESTAURAR FÍSICA
+        // RESTAURAR FÍSICA EN EL SERVIDOR
         // -----------------------------------------------------
 
-        Rigidbody blockRigidbody =
-            block.GetComponent<Rigidbody>();
-
-        if (blockRigidbody != null)
-        {
-            blockRigidbody.isKinematic =
-                false;
-        }
-
-
-        // -----------------------------------------------------
-        // RESTAURAR COLISIÓN
-        // -----------------------------------------------------
-
-        IgnorePlayerBlockCollision(
+        SetBlockPhysics(
             block,
             false
         );
 
 
-        SetPlayerBlockCollisionClientRpc(
+        // -----------------------------------------------------
+        // RESTAURAR FÍSICA EN LOS CLIENTES
+        // -----------------------------------------------------
+
+        SetBlockPhysicsClientRpc(
             block.NetworkObject,
-            false
+            false,
+            senderClientId
+        );
+
+
+        // -----------------------------------------------------
+        // INFORMAR AL JUGADOR QUE SOLTÓ
+        // -----------------------------------------------------
+
+        ClearHeldBlockClientRpc(
+            block.NetworkObject,
+            senderClientId
         );
 
 
         Debug.Log(
             "[NetworkPlayerInteraction] " +
             "Cliente " +
-            OwnerClientId +
+            senderClientId +
             " soltó el bloque."
+        );
+    }
+
+
+    // =========================================================
+    // BUSCAR BLOQUE SOSTENIDO
+    // =========================================================
+
+    private NetworkFruitBlock FindHeldBlockByClientId(
+        ulong clientId)
+    {
+        NetworkFruitBlock[] blocks =
+            FindObjectsByType<NetworkFruitBlock>();
+
+
+        foreach (NetworkFruitBlock block in blocks)
+        {
+            if (block == null)
+                continue;
+
+
+            if (!block.IsBeingHeld)
+                continue;
+
+
+            if (block.HolderClientId == clientId)
+            {
+                return block;
+            }
+        }
+
+
+        return null;
+    }
+
+
+    // =========================================================
+    // FÍSICA DEL BLOQUE
+    // =========================================================
+
+    private void SetBlockPhysics(
+        NetworkFruitBlock block,
+        bool held)
+    {
+        if (block == null)
+            return;
+
+
+        Rigidbody rb =
+            block.GetComponent<Rigidbody>();
+
+
+        if (rb == null)
+            return;
+
+
+        if (held)
+        {
+            // Eliminar cualquier velocidad antes de
+            // convertirlo en Kinematic.
+
+            rb.linearVelocity =
+                Vector3.zero;
+
+            rb.angularVelocity =
+                Vector3.zero;
+
+            rb.isKinematic =
+                true;
+
+            rb.useGravity =
+                false;
+        }
+        else
+        {
+            // Eliminar velocidades residuales antes
+            // de devolver la física.
+
+            rb.linearVelocity =
+                Vector3.zero;
+
+            rb.angularVelocity =
+                Vector3.zero;
+
+            rb.isKinematic =
+                false;
+
+            rb.useGravity =
+                true;
+        }
+    }
+
+
+    // =========================================================
+    // CLIENT RPC - FÍSICA
+    // =========================================================
+
+    [ClientRpc]
+    private void SetBlockPhysicsClientRpc(
+        NetworkObjectReference blockReference,
+        bool held,
+        ulong holderClientId)
+    {
+        if (!blockReference.TryGet(
+            out NetworkObject networkObject))
+        {
+            return;
+        }
+
+
+        NetworkFruitBlock block =
+            networkObject.GetComponent<NetworkFruitBlock>();
+
+
+        if (block == null)
+            return;
+
+
+        // -----------------------------------------------------
+        // CONFIGURAR RIGIDBODY
+        // -----------------------------------------------------
+
+        SetBlockPhysics(
+            block,
+            held
         );
 
 
         // -----------------------------------------------------
-        // INFORMAR A LOS CLIENTES
+        // COLISIÓN DEL JUGADOR CON SU PROPIO BLOQUE
         // -----------------------------------------------------
 
-        ClearHeldBlockClientRpc();
+        if (holderClientId ==
+            NetworkManager.LocalClientId)
+        {
+            IgnorePlayerBlockCollision(
+                block,
+                held
+            );
+        }
     }
 
 
@@ -345,6 +506,7 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
         Collider[] playerColliders =
             GetComponentsInChildren<Collider>();
+
 
         Collider[] blockColliders =
             block.GetComponentsInChildren<Collider>();
@@ -372,49 +534,24 @@ public class NetworkPlayerInteraction : NetworkBehaviour
 
 
     // =========================================================
-    // CLIENT RPC - COLISIÓN
-    // =========================================================
-
-    [ClientRpc]
-    private void SetPlayerBlockCollisionClientRpc(
-        NetworkObjectReference blockReference,
-        bool ignore)
-    {
-        // Solo el jugador propietario modifica
-        // su propia colisión.
-        if (!IsOwner)
-            return;
-
-
-        if (!blockReference.TryGet(
-            out NetworkObject networkObject))
-        {
-            return;
-        }
-
-
-        NetworkFruitBlock block =
-            networkObject.GetComponent<NetworkFruitBlock>();
-
-        if (block == null)
-            return;
-
-
-        IgnorePlayerBlockCollision(
-            block,
-            ignore
-        );
-    }
-
-
-    // =========================================================
     // CLIENT RPC - GRAB
     // =========================================================
 
     [ClientRpc]
     private void SetHeldBlockClientRpc(
-        NetworkObjectReference blockReference)
+        NetworkObjectReference blockReference,
+        ulong grabbingClientId)
     {
+        // Solo el jugador que agarró el bloque
+        // guarda la referencia local.
+
+        if (grabbingClientId !=
+            NetworkManager.LocalClientId)
+        {
+            return;
+        }
+
+
         if (!blockReference.TryGet(
             out NetworkObject networkObject))
         {
@@ -425,16 +562,21 @@ public class NetworkPlayerInteraction : NetworkBehaviour
         NetworkFruitBlock block =
             networkObject.GetComponent<NetworkFruitBlock>();
 
+
         if (block == null)
             return;
 
 
-        // Solamente el jugador que agarró
-        // guarda la referencia local.
-        if (IsOwner)
-        {
-            heldBlock = block;
-        }
+        heldBlock = block;
+
+
+        // Asegurar que la colisión con el jugador
+        // quede desactivada.
+
+        IgnorePlayerBlockCollision(
+            block,
+            true
+        );
     }
 
 
@@ -443,9 +585,46 @@ public class NetworkPlayerInteraction : NetworkBehaviour
     // =========================================================
 
     [ClientRpc]
-    private void ClearHeldBlockClientRpc()
+    private void ClearHeldBlockClientRpc(
+        NetworkObjectReference blockReference,
+        ulong previousHolderClientId)
     {
-        if (IsOwner)
+        // Solo el jugador que tenía el bloque
+        // limpia su referencia.
+
+        if (previousHolderClientId !=
+            NetworkManager.LocalClientId)
+        {
+            return;
+        }
+
+
+        if (!blockReference.TryGet(
+            out NetworkObject networkObject))
+        {
+            return;
+        }
+
+
+        NetworkFruitBlock block =
+            networkObject.GetComponent<NetworkFruitBlock>();
+
+
+        if (block == null)
+            return;
+
+
+        // Restaurar colisión.
+
+        IgnorePlayerBlockCollision(
+            block,
+            false
+        );
+
+
+        // Limpiar referencia local.
+
+        if (heldBlock == block)
         {
             heldBlock = null;
         }
