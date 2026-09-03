@@ -17,6 +17,8 @@ public class PlayerMovement : MonoBehaviour
     public float groundCheckRadius = 0.25f;
     public float groundCheckDistance = 0.5f;
 
+    public Animator animator;
+
     private Rigidbody rb;
     private PlayerInteraction playerInteraction;
 
@@ -55,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
     {
         CheckGround();
 
+        animator.SetBool("IsGrounded", isGrounded);
+
 
         // =====================================================
         // INPUT DE MOVIMIENTO
@@ -76,6 +80,9 @@ public class PlayerMovement : MonoBehaviour
         if (Keyboard.current.sKey.isPressed)
             vertical = -1f;
 
+
+        animator.SetFloat("VelX", horizontal);
+        animator.SetFloat("VelY", vertical);
 
         movement =
             transform.right * horizontal +
@@ -101,6 +108,8 @@ public class PlayerMovement : MonoBehaviour
             isGrounded = false;
             isJumping = true;
             jumpTime = 0f;
+
+            animator.SetTrigger("Jump");
         }
 
 

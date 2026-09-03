@@ -20,6 +20,7 @@ public class PlayerCamera : MonoBehaviour
     private float currentVerticalRotation;
 
     private PlayerMovement playerMovement;
+    private NetworkPlayerMovement networkPlayerMovement;
 
 
     // =========================================================
@@ -36,8 +37,7 @@ public class PlayerCamera : MonoBehaviour
 
         if (player != null)
         {
-            playerMovement =
-                player.GetComponent<PlayerMovement>();
+            SetPlayer(player);
         }
     }
 
@@ -70,9 +70,18 @@ public class PlayerCamera : MonoBehaviour
         if (Mathf.Abs(horizontalRotation) >
             0.0001f)
         {
+            // SINGLEPLAYER
             if (playerMovement != null)
             {
                 playerMovement.RequestRotation(
+                    horizontalRotation
+                );
+            }
+
+            // MULTIPLAYER
+            if (networkPlayerMovement != null)
+            {
+                networkPlayerMovement.RequestRotation(
                     horizontalRotation
                 );
             }
@@ -135,28 +144,36 @@ public class PlayerCamera : MonoBehaviour
         );
     }
 
+
     // =========================================================
-// ASIGNAR PLAYER
-// =========================================================
+    // ASIGNAR PLAYER
+    // =========================================================
 
-public void SetPlayer(Transform newPlayer)
-{
-    if (newPlayer == null)
+    public void SetPlayer(Transform newPlayer)
     {
-        Debug.LogWarning(
-            "PlayerCamera: se intentó asignar un Player nulo."
+        if (newPlayer == null)
+        {
+            Debug.LogWarning(
+                "PlayerCamera: se intentó asignar un Player nulo."
+            );
+
+            return;
+        }
+
+
+        player = newPlayer;
+
+
+        playerMovement =
+            player.GetComponent<PlayerMovement>();
+
+
+        networkPlayerMovement =
+            player.GetComponent<NetworkPlayerMovement>();
+
+
+        Debug.Log(
+            "PlayerCamera: Player asignado correctamente."
         );
-
-        return;
     }
-
-    player = newPlayer;
-
-    playerMovement =
-        player.GetComponent<PlayerMovement>();
-
-    Debug.Log(
-        "PlayerCamera: Player asignado correctamente."
-    );
-}
 }

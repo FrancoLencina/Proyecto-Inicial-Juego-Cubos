@@ -8,6 +8,11 @@ public class NetworkFruitBlock : NetworkBehaviour
     [SerializeField] private List<FruitData> availableFruits;
 
     private Renderer blockRenderer;
+    private Rigidbody blockRigidbody;
+
+    // =========================================================
+    // NETWORK VARIABLES
+    // =========================================================
 
     private NetworkVariable<FruitType> fruitType =
         new NetworkVariable<FruitType>(
@@ -16,23 +21,29 @@ public class NetworkFruitBlock : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
-private NetworkVariable<bool> isBeingHeld =
-    new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+    private NetworkVariable<bool> isBeingHeld =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
-private NetworkVariable<ulong> holderClientId =
-    new NetworkVariable<ulong>(
-        0,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+    private NetworkVariable<ulong> holderClientId =
+        new NetworkVariable<ulong>(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
-public bool IsBeingHeld => isBeingHeld.Value;
+    public bool IsBeingHeld => isBeingHeld.Value;
 
-public ulong HolderClientId => holderClientId.Value;
+    public ulong HolderClientId => holderClientId.Value;
+
+
+    // =========================================================
+    // FRUIT DATA
+    // =========================================================
+
     public FruitData FruitData
     {
         get
@@ -55,38 +66,144 @@ public ulong HolderClientId => holderClientId.Value;
 
     public FruitType FruitType => fruitType.Value;
 
+
+    // =========================================================
+    // UNITY
+    // =========================================================
+
     private void Awake()
     {
         blockRenderer = GetComponent<Renderer>();
 
         if (blockRenderer == null)
         {
-            blockRenderer = GetComponentInChildren<Renderer>();
+            blockRenderer =
+                GetComponentInChildren<Renderer>();
         }
+
+        blockRigidbody =
+            GetComponent<Rigidbody>();
     }
+
 
     public override void OnNetworkSpawn()
     {
         fruitType.OnValueChanged += OnFruitTypeChanged;
 
+        isBeingHeld.OnValueChanged += OnHeldStateChanged;
+
         Debug.Log(
             "[NetworkFruitBlock] Spawned | " +
             "IsServer: " + IsServer +
-            " | FruitType: " + fruitType.Value +
-            " | AvailableFruits: " +
-            (availableFruits == null
-                ? "NULL"
-                : availableFruits.Count.ToString())
+            " | IsOwner: " + IsOwner +
+            " | FruitType: " + fruitType.Value
         );
 
-        // Intentamos aplicar el material tanto en Host como Cliente.
         ApplyFruitData();
+
+        ApplyPhysicsState();
     }
+
 
     public override void OnNetworkDespawn()
     {
         fruitType.OnValueChanged -= OnFruitTypeChanged;
+
+        isBeingHeld.OnValueChanged -= OnHeldStateChanged;
     }
+
+
+    // =========================================================
+    // PHYSICS
+    // =========================================================
+
+    private void OnHeldStateChanged(
+        bool previousValue,
+        bool newValue)
+    {
+        ApplyPhysicsState();
+    }
+
+
+    private void ApplyPhysicsState()
+    {
+        if (blockRigidbody == null)
+        {
+            blockRigidbody =
+                GetComponent<Rigidbody>();
+        }
+
+        if (blockRigidbody == null)
+            return;
+
+
+        // -----------------------------------------------------
+        // BLOQUE AGARRADO
+        // -----------------------------------------------------
+
+        if (isBeingHeld.Value)
+        {
+            // Primero aseguramos que el Rigidbody todavía
+            // permita modificar velocidades.
+
+            if (!blockRigidbody.isKinematic)
+            {
+                blockRigidbody.linearVelocity =
+                    Vector3.zero;
+
+                blockRigidbody.angularVelocity =
+                    Vector3.zero;
+            }
+
+
+            blockRigidbody.isKinematic =
+                true;
+
+            blockRigidbody.useGravity =
+                false;
+
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // BLOQUE LIBRE
+        // -----------------------------------------------------
+
+        // La física de los bloques libres pertenece
+        // al servidor.
+        //
+        // En el Host:
+        // IsServer = true -> física dinámica.
+        //
+        // En los clientes:
+        // IsServer = false -> representación kinematic.
+        //
+        // De esta manera no existen dos simulaciones
+        // físicas diferentes del mismo bloque.
+
+        if (IsServer)
+        {
+            blockRigidbody.isKinematic =
+                false;
+
+            blockRigidbody.useGravity =
+                true;
+        }
+        else
+        {
+            blockRigidbody.isKinematic =
+                true;
+
+            blockRigidbody.useGravity =
+                false;
+        }
+    }
+
+
+    // =========================================================
+    // FRUIT
+    // =========================================================
 
     public void SetFruitData(FruitData fruit)
     {
@@ -96,131 +213,130 @@ public ulong HolderClientId => holderClientId.Value;
         if (fruit == null)
         {
             Debug.LogError(
-                "[NetworkFruitBlock] Se intentó asignar una fruta null."
+                "[NetworkFruitBlock] " +
+                "Se intentó asignar una fruta null."
             );
 
             return;
         }
 
-        Debug.Log(
-            "[NetworkFruitBlock] SetFruitData → "
-            + fruit.DisplayName
-            + " / "
-            + fruit.FruitType
-        );
-
-        fruitType.Value = fruit.FruitType;
+        fruitType.Value =
+            fruit.FruitType;
 
         ApplyFruitData();
     }
+
 
     private void OnFruitTypeChanged(
         FruitType previousValue,
         FruitType newValue)
     {
-        Debug.Log(
-            "[NetworkFruitBlock] FruitTypeChanged → "
-            + previousValue
-            + " → "
-            + newValue
-        );
-
         ApplyFruitData();
     }
+
 
     private void ApplyFruitData()
     {
         if (availableFruits == null)
-        {
-            Debug.LogError(
-                "[NetworkFruitBlock] Available Fruits es NULL."
-            );
-
             return;
-        }
 
-        if (availableFruits.Count == 0)
-        {
-            Debug.LogError(
-                "[NetworkFruitBlock] Available Fruits está vacío."
-            );
-
-            return;
-        }
 
         FruitData fruit = null;
 
+
         foreach (FruitData data in availableFruits)
         {
-            if (data == null)
-                continue;
-
-            if (data.FruitType == fruitType.Value)
+            if (data != null &&
+                data.FruitType == fruitType.Value)
             {
                 fruit = data;
                 break;
             }
         }
 
+
         if (fruit == null)
-        {
-            Debug.LogError(
-                "[NetworkFruitBlock] No existe FruitData para FruitType: "
-                + fruitType.Value
-            );
-
             return;
-        }
+
 
         if (blockRenderer == null)
         {
-            blockRenderer = GetComponent<Renderer>();
-
-            if (blockRenderer == null)
-            {
-                blockRenderer =
-                    GetComponentInChildren<Renderer>();
-            }
+            blockRenderer =
+                GetComponentInChildren<Renderer>();
         }
+
 
         if (blockRenderer == null)
-        {
-            Debug.LogError(
-                "[NetworkFruitBlock] No se encontró Renderer."
-            );
-
             return;
-        }
+
 
         if (fruit.Material == null)
-        {
-            Debug.LogError(
-                "[NetworkFruitBlock] "
-                + fruit.DisplayName
-                + " no tiene Material."
-            );
-
             return;
-        }
 
-        blockRenderer.material = fruit.Material;
 
-        Debug.Log(
-            "[NetworkFruitBlock] Material aplicado → "
-            + fruit.DisplayName
-            + " / "
-            + fruit.FruitType
-        );
+        blockRenderer.material =
+            fruit.Material;
     }
 
-    public void SetHeldState(
-    bool held,
-    ulong clientId)
-{
-    if (!IsServer)
-        return;
 
-    isBeingHeld.Value = held;
-    holderClientId.Value = clientId;
-}
+    // =========================================================
+    // HELD STATE
+    // =========================================================
+
+    public void SetHeldState(
+        bool held,
+        ulong clientId)
+    {
+        if (!IsServer)
+            return;
+
+
+        isBeingHeld.Value =
+            held;
+
+        holderClientId.Value =
+            clientId;
+
+
+        // Aplicar inmediatamente en el servidor.
+        ApplyPhysicsState();
+    }
+
+
+    // =========================================================
+    // SERVER PHYSICS
+    // =========================================================
+
+    /// <summary>
+    /// Aplica una fuerza al bloque desde el servidor.
+    /// Se utiliza para que los clientes puedan empujar
+    /// bloques sin simular físicamente el bloque localmente.
+    /// </summary>
+    public void ApplyServerImpulse(
+        Vector3 impulse)
+    {
+        if (!IsServer)
+            return;
+
+        if (isBeingHeld.Value)
+            return;
+
+        if (blockRigidbody == null)
+        {
+            blockRigidbody =
+                GetComponent<Rigidbody>();
+        }
+
+        if (blockRigidbody == null)
+            return;
+
+        if (blockRigidbody.isKinematic)
+            return;
+
+
+        blockRigidbody.AddForce(
+            impulse,
+            ForceMode.Impulse
+        );
+    }
 }

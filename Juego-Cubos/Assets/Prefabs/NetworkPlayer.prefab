@@ -103,11 +103,11 @@ GameObject:
   - component: {fileID: 7402044684265900754}
   - component: {fileID: 4965848522268285331}
   - component: {fileID: 1649808958679449301}
-  - component: {fileID: 6070869279838661611}
   - component: {fileID: 4516973383814175726}
   - component: {fileID: -8566247756362540240}
   - component: {fileID: -5577838748402836159}
   - component: {fileID: 5740501286645353597}
+  - component: {fileID: 6695318908706700193}
   m_Layer: 9
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -239,28 +239,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &6070869279838661611
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4006211671612427899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91191372af84f7a4cada06dc3289ee93, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  speed: 8
-  jumpForce: 5
-  jumpHoldForce: 4
-  maxJumpTime: 0.6
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 448
-  groundCheckHeight: 0
-  groundCheckRadius: 0.25
-  groundCheckDistance: 1
 --- !u!114 &4516973383814175726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,7 +251,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2028869389
+  GlobalObjectIdHash: 2743868888
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -347,7 +325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkSetup
   ShowTopMostFoldoutHeaderGroup: 1
-  playerMovement: {fileID: 6070869279838661611}
+  networkPlayerMovement: {fileID: 0}
   networkPlayerInteraction: {fileID: 0}
   playerVision: {fileID: 4249321013474277945}
 --- !u!114 &5740501286645353597
@@ -368,9 +346,41 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   holdPoint: {fileID: 8023107354669244637}
+  heldBlockBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 1857
+  slopeNormalThreshold: 0.5
+  maxRotationCorrection: 0.25
+  rotationCorrectionStep: 0.01
+  rotationSamples: 30
+  pushForce: 3
   interactionDistance: 3
   interactionRadius: 0.18
-  holdPositionSpeed: 20
+--- !u!114 &6695318908706700193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4006211671612427899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8541e65a1f809c44fafe6629af15be60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerMovement
+  ShowTopMostFoldoutHeaderGroup: 1
+  speed: 8
+  jumpForce: 5
+  jumpHoldForce: 4
+  maxJumpTime: 0.6
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 320
+  groundCheckHeight: 0
+  groundCheckRadius: 0.25
+  groundCheckDistance: 1
+  blockPushForce: 1.5
+  blockPushInterval: 0.08
 --- !u!1 &4249321013474277945
 GameObject:
   m_ObjectHideFlags: 0
@@ -534,7 +544,7 @@ Transform:
   m_GameObject: {fileID: 7398822436924594348}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1.259}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
