@@ -57,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
     {
         CheckGround();
 
+        animator.SetBool("IsGrounded", isGrounded);
+
 
         // =====================================================
         // INPUT DE MOVIMIENTO
@@ -106,6 +108,8 @@ public class PlayerMovement : MonoBehaviour
             isGrounded = false;
             isJumping = true;
             jumpTime = 0f;
+
+            animator.SetTrigger("Jump");
         }
 
 
