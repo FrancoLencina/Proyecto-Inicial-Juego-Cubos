@@ -20,19 +20,25 @@ public class GameManager : MonoBehaviour
     {
         if (availableFruits.Count < sequenceLength)
         {
-            Debug.LogError("No hay suficientes frutas disponibles para generar la secuencia.");
+            Debug.LogError(
+                "No hay suficientes frutas disponibles para generar la secuencia."
+            );
+
             return;
         }
 
         targetSequence = new List<FruitData>();
 
-        List<FruitData> availablePool = new List<FruitData>(availableFruits);
+        List<FruitData> availablePool =
+            new List<FruitData>(availableFruits);
 
         for (int i = 0; i < sequenceLength; i++)
         {
-            int randomIndex = Random.Range(0, availablePool.Count);
+            int randomIndex =
+                Random.Range(0, availablePool.Count);
 
-            FruitData selectedFruit = availablePool[randomIndex];
+            FruitData selectedFruit =
+                availablePool[randomIndex];
 
             targetSequence.Add(selectedFruit);
 
@@ -41,11 +47,27 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("Secuencia generada:");
 
-        foreach (FruitData fruit in targetSequence)
+        for (int i = 0; i < targetSequence.Count; i++)
         {
-            Debug.Log(fruit.DisplayName);
+            Debug.Log(
+                i + ": " +
+                targetSequence[i].DisplayName
+            );
         }
 
-        sequenceUI.DisplaySequence(targetSequence.ToArray());
+        if (sequenceUI != null)
+        {
+            sequenceUI.DisplaySequence(
+                targetSequence.ToArray()
+            );
+        }
+    }
+
+    public void UpdateCurrentTarget(int currentIndex)
+    {
+        if (sequenceUI == null)
+            return;
+
+        sequenceUI.SetCurrentTarget(currentIndex);
     }
 }
