@@ -143,11 +143,18 @@ public class NetworkFruitBlock : NetworkBehaviour
 
         if (isBeingHeld.Value)
         {
-            blockRigidbody.linearVelocity =
-                Vector3.zero;
+            // Primero aseguramos que el Rigidbody todavía
+            // permita modificar velocidades.
 
-            blockRigidbody.angularVelocity =
-                Vector3.zero;
+            if (!blockRigidbody.isKinematic)
+            {
+                blockRigidbody.linearVelocity =
+                    Vector3.zero;
+
+                blockRigidbody.angularVelocity =
+                    Vector3.zero;
+            }
+
 
             blockRigidbody.isKinematic =
                 true;

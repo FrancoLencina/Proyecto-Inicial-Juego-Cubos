@@ -27,8 +27,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
     public float blockPushInterval = 0.08f;
 
     private Rigidbody rb;
-    private PlayerInteraction playerInteraction;
-
+    private NetworkPlayerInteraction playerInteraction;
     private Vector3 movement;
 
     private bool isGrounded;
@@ -54,7 +53,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
 
         playerInteraction =
-            GetComponent<PlayerInteraction>();
+    GetComponent<NetworkPlayerInteraction>();
 
 
         // Solo el jugador dueño puede controlar
