@@ -348,12 +348,12 @@ MonoBehaviour:
   holdPoint: {fileID: 8023107354669244637}
   heldBlockBlockingLayers:
     serializedVersion: 2
-    m_Bits: 1857
+    m_Bits: 1793
   slopeNormalThreshold: 0.5
   maxRotationCorrection: 0.25
   rotationCorrectionStep: 0.01
   rotationSamples: 30
-  pushForce: 3
+  pushForce: 0.5
   interactionDistance: 3
   interactionRadius: 0.18
 --- !u!114 &6695318908706700193

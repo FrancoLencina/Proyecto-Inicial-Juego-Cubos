@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10652, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 1a7e33a8a8054ad49b94e3438931808e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -129,3 +129,4 @@ MonoBehaviour:
   validBlockLayer:
     serializedVersion: 2
     m_Bits: 64
+  verticalTolerance: 0.05

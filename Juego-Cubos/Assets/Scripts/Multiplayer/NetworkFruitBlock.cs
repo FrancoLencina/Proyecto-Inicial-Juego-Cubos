@@ -339,4 +339,102 @@ public class NetworkFruitBlock : NetworkBehaviour
             ForceMode.Impulse
         );
     }
+
+    // =========================================================
+    // NETWORK PUSH
+    // =========================================================
+
+    /// <summary>
+    /// Solicita un empuje sobre este bloque.
+    ///
+    /// Si la llamada ocurre en el servidor, la fuerza se aplica
+    /// inmediatamente.
+    ///
+    /// Si ocurre en un cliente, se envía una solicitud al servidor.
+    /// </summary>
+    public void RequestPush(
+        Vector3 force
+    )
+    {
+        if (force.sqrMagnitude <
+            0.000001f)
+        {
+            return;
+        }
+
+
+        if (IsBeingHeld)
+        {
+            return;
+        }
+
+
+        if (IsServer)
+        {
+            ApplyNetworkPush(
+                force
+            );
+        }
+        else
+        {
+            RequestPushServerRpc(
+                force
+            );
+        }
+    }
+
+
+    // =========================================================
+    // SERVER RPC - REQUEST PUSH
+    // =========================================================
+
+    [ServerRpc(
+        RequireOwnership = false
+    )]
+    private void RequestPushServerRpc(
+        Vector3 force
+    )
+    {
+        ApplyNetworkPush(
+            force
+        );
+    }
+
+
+    // =========================================================
+    // APPLY NETWORK PUSH
+    // =========================================================
+
+    private void ApplyNetworkPush(
+        Vector3 force
+    )
+    {
+        if (!IsServer)
+            return;
+
+
+        if (IsBeingHeld)
+            return;
+
+
+        if (blockRigidbody == null)
+        {
+            blockRigidbody =
+                GetComponent<Rigidbody>();
+        }
+
+
+        if (blockRigidbody == null)
+            return;
+
+
+        if (blockRigidbody.isKinematic)
+            return;
+
+
+        blockRigidbody.AddForce(
+            force,
+            ForceMode.Force
+        );
+    }
 }
