@@ -463,12 +463,6 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
             if (heldRigidbody != null)
             {
-                heldRigidbody.linearVelocity =
-                    Vector3.zero;
-
-                heldRigidbody.angularVelocity =
-                    Vector3.zero;
-
                 heldRigidbody.position =
                     holdPoint.position;
 

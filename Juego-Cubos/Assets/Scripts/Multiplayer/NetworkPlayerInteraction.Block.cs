@@ -171,6 +171,8 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
             in nearbyObjects
         )
         {
+            // Ignorar el propio bloque sostenido.
+
             if (IsHeldBlockCollider(
                 collider
             ))
@@ -191,8 +193,7 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
             }
 
 
-            // No empujar bloques que otro jugador
-            // está sosteniendo.
+            // No empujar bloques sostenidos.
 
             if (otherBlock.IsBeingHeld)
             {
@@ -200,16 +201,17 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
             }
 
 
+            // =====================================================
+            // DIRECCIÓN DEL EMPUJE
+            // =====================================================
+
             Vector3 pushDirection =
                 blockMovement.normalized;
 
 
-            // -------------------------------------------------
-            // NO EMPUJAR VERTICALMENTE
-            // -------------------------------------------------
+            // No aplicar fuerza vertical.
 
-            pushDirection.y =
-                0f;
+            pushDirection.y = 0f;
 
 
             if (pushDirection.sqrMagnitude <
@@ -221,6 +223,10 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
             pushDirection.Normalize();
 
+
+            // =====================================================
+            // CALCULAR FUERZA
+            // =====================================================
 
             float movementAmount =
                 blockMovement.magnitude;
@@ -234,88 +240,18 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
                 );
 
 
-            Vector3 impulse =
+            Vector3 pushForceVector =
                 pushDirection *
                 force;
 
 
-            // -------------------------------------------------
-            // ENVIAR AL SERVIDOR
-            // -------------------------------------------------
+            // =====================================================
+            // PEDIR EMPUJE AL BLOQUE
+            // =====================================================
 
-            PushHeldBlockServerRpc(
-                otherBlock.NetworkObject,
-                impulse
+            otherBlock.RequestPush(
+                pushForceVector
             );
         }
-    }
-
-
-    // =========================================================
-    // SERVER RPC - EMPUJAR BLOQUE CON BLOQUE SOSTENIDO
-    // =========================================================
-
-    [ServerRpc]
-    private void PushHeldBlockServerRpc(
-        NetworkObjectReference blockReference,
-        Vector3 impulse
-    )
-    {
-        if (!blockReference.TryGet(
-            out NetworkObject networkObject
-        ))
-        {
-            return;
-        }
-
-
-        NetworkFruitBlock block =
-            networkObject.GetComponent<
-                NetworkFruitBlock
-            >();
-
-
-        if (block == null)
-        {
-            return;
-        }
-
-
-        if (block.IsBeingHeld)
-        {
-            return;
-        }
-
-
-        Rigidbody rb =
-            block.GetComponent<Rigidbody>();
-
-
-        if (rb == null ||
-            rb.isKinematic)
-        {
-            return;
-        }
-
-
-        // Limitar fuerzas excesivas.
-
-        float maxForce =
-            10f;
-
-
-        if (impulse.magnitude >
-            maxForce)
-        {
-            impulse =
-                impulse.normalized *
-                maxForce;
-        }
-
-
-        rb.AddForce(
-            impulse,
-            ForceMode.Force
-        );
     }
 }
