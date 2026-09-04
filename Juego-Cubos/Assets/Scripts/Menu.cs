@@ -20,7 +20,8 @@ private bool alreadyLoaded = false;
 private void Start()
 {
 
-
+ Cursor.visible = true;
+    Cursor.lockState = CursorLockMode.None;
     // Validar que no se haya cargado antes.
     if (!alreadyLoaded)
     {

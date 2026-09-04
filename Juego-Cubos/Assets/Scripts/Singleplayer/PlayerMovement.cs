@@ -25,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 movement;
 
     private bool isGrounded;
+    public bool IsGrounded => isGrounded;
 
     private bool isJumping;
     private float jumpTime;

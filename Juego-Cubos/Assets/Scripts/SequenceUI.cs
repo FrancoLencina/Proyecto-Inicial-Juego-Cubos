@@ -14,82 +14,185 @@ public class SequenceUI : MonoBehaviour
 
     [Header("Border")]
     [SerializeField] private Color borderColor = Color.yellow;
-    [SerializeField] private Vector2 borderSize = new Vector2(4f, -4f);
+    [SerializeField] private Vector2 borderSize =
+        new Vector2(4f, -4f);
 
-    private List<GameObject> fruitObjects = new List<GameObject>();
+    private List<GameObject> fruitObjects =
+        new List<GameObject>();
 
-    // 0 = primer bloque que debe colocarse.
     private int currentTargetIndex = 0;
 
-    public void DisplaySequence(FruitData[] sequence)
+    // =====================================================
+    // MOSTRAR SECUENCIA
+    // =====================================================
+
+    public void DisplaySequence(
+        FruitData[] sequence
+    )
     {
+        if (container == null)
+        {
+            Debug.LogError(
+                "[SequenceUI] Container no está asignado."
+            );
+
+            return;
+        }
+
+        if (fruitImagePrefab == null)
+        {
+            Debug.LogError(
+                "[SequenceUI] Fruit Image Prefab no está asignado."
+            );
+
+            return;
+        }
+
+        if (
+            sequence == null ||
+            sequence.Length == 0
+        )
+        {
+            ClearSequence();
+            return;
+        }
+
         ClearSequence();
 
         fruitObjects.Clear();
 
-        // Se crea al revés visualmente:
-        // Arriba = último bloque
-        // Abajo = primer bloque
-        for (int i = sequence.Length - 1; i >= 0; i--)
-        {
-            GameObject fruitObject = Instantiate(
-                fruitImagePrefab,
-                container
-            );
+        /*
+         * La UI se muestra invertida:
+         *
+         * Arriba    = último objetivo
+         * ...
+         * Abajo     = primer objetivo
+         */
 
-            Image image = fruitObject.GetComponent<Image>();
+        for (
+            int i = sequence.Length - 1;
+            i >= 0;
+            i--
+        )
+        {
+            if (sequence[i] == null)
+                continue;
+
+            GameObject fruitObject =
+                Instantiate(
+                    fruitImagePrefab,
+                    container
+                );
+
+            Image image =
+                fruitObject.GetComponent<Image>();
 
             if (image != null)
             {
-                image.sprite = sequence[i].Image;
+                image.sprite =
+                    sequence[i].Image;
             }
 
-            fruitObjects.Add(fruitObject);
+            fruitObject.transform.localScale =
+                Vector3.one *
+                normalScale;
+
+            Outline outline =
+                fruitObject.GetComponent<Outline>();
+
+            if (outline == null)
+            {
+                outline =
+                    fruitObject.AddComponent<Outline>();
+            }
+
+            outline.effectColor =
+                borderColor;
+
+            outline.effectDistance =
+                borderSize;
+
+            outline.enabled =
+                false;
+
+            fruitObjects.Add(
+                fruitObject
+            );
         }
 
         currentTargetIndex = 0;
 
         UpdateHighlight();
+
+        Debug.Log(
+            "[SequenceUI] Secuencia mostrada en el HUD | " +
+            "Cantidad: " +
+            fruitObjects.Count
+        );
     }
 
-    public void SetCurrentTarget(int targetIndex)
+    // =====================================================
+    // CAMBIAR OBJETIVO ACTUAL
+    // =====================================================
+
+    public void SetCurrentTarget(
+        int targetIndex
+    )
     {
-        currentTargetIndex = targetIndex;
+        currentTargetIndex =
+            targetIndex;
 
         UpdateHighlight();
     }
 
+    // =====================================================
+    // ACTUALIZAR HIGHLIGHT
+    // =====================================================
+
     private void UpdateHighlight()
     {
-        if (fruitObjects.Count == 0)
-            return;
-
-        for (int i = 0; i < fruitObjects.Count; i++)
+        if (
+            fruitObjects.Count == 0
+        )
         {
-            GameObject fruitObject = fruitObjects[i];
+            return;
+        }
+
+        for (
+            int i = 0;
+            i < fruitObjects.Count;
+            i++
+        )
+        {
+            GameObject fruitObject =
+                fruitObjects[i];
 
             if (fruitObject == null)
                 continue;
 
             /*
-             * Como la UI está invertida:
-             *
-             * fruitObjects[0] = último de la secuencia
-             * fruitObjects[último] = primero de la secuencia
+             * Como la lista visual está invertida,
+             * convertimos la posición visual a la
+             * posición real de la secuencia.
              */
+
             int realSequenceIndex =
-                fruitObjects.Count - 1 - i;
+                fruitObjects.Count -
+                1 -
+                i;
 
             bool isCurrentTarget =
-                realSequenceIndex == currentTargetIndex;
+                currentTargetIndex >= 0 &&
+                realSequenceIndex ==
+                currentTargetIndex;
 
-            // Solo agrandamos el bloque actual.
             fruitObject.transform.localScale =
                 isCurrentTarget
-                    ? Vector3.one * highlightedScale
-                    : Vector3.one * normalScale;
+                    ? Vector3.one *
+                      highlightedScale
+                    : Vector3.one *
+                      normalScale;
 
-            // El color de la fruta NO se modifica.
             UpdateBorder(
                 fruitObject,
                 isCurrentTarget
@@ -97,30 +200,70 @@ public class SequenceUI : MonoBehaviour
         }
     }
 
+    // =====================================================
+    // BORDE
+    // =====================================================
+
     private void UpdateBorder(
         GameObject fruitObject,
         bool active
     )
     {
+        if (fruitObject == null)
+            return;
+
         Outline outline =
             fruitObject.GetComponent<Outline>();
 
         if (outline == null)
         {
-            outline = fruitObject.AddComponent<Outline>();
-
-            outline.effectColor = borderColor;
-            outline.effectDistance = borderSize;
+            outline =
+                fruitObject.AddComponent<Outline>();
         }
 
-        outline.enabled = active;
+        outline.effectColor =
+            borderColor;
+
+        outline.effectDistance =
+            borderSize;
+
+        outline.enabled =
+            active;
     }
 
-    private void ClearSequence()
+    // =====================================================
+    // LIMPIAR
+    // =====================================================
+
+    public void ClearSequence()
     {
-        for (int i = container.childCount - 1; i >= 0; i--)
+        if (container == null)
+            return;
+
+        for (
+            int i =
+                container.childCount - 1;
+            i >= 0;
+            i--
+        )
         {
-            Destroy(container.GetChild(i).gameObject);
+            Destroy(
+                container.GetChild(i).gameObject
+            );
         }
+
+        fruitObjects.Clear();
+
+        currentTargetIndex = 0;
     }
+
+    // =====================================================
+    // PROPIEDADES
+    // =====================================================
+
+    public int CurrentTargetIndex =>
+        currentTargetIndex;
+
+    public int SequenceCount =>
+        fruitObjects.Count;
 }

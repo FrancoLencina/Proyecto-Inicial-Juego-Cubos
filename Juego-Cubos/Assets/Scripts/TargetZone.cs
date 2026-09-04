@@ -1,7 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class TargetZone : MonoBehaviour
 {
@@ -9,24 +9,107 @@ public class TargetZone : MonoBehaviour
     [SerializeField] private LayerMask validBlockLayer;
     [SerializeField] private float verticalTolerance = 0.05f;
 
+    [Header("Victory Check")]
+    [SerializeField] private float victoryDelay = 1.5f;
+
     private List<FruitBlock> fruitBlocksInside =
         new List<FruitBlock>();
 
     private int currentProgress = -1;
 
+    private bool sequenceCompleted = false;
+    private bool checkingVictory = false;
+
+
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
     private void Update()
     {
+        if (sequenceCompleted)
+            return;
+
         CleanInvalidBlocks();
 
         UpdateSequenceProgress();
 
-        if (IsCorrectStack())
+        /*
+         * Si la pila parece correcta, NO ganamos inmediatamente.
+         *
+         * Esperamos un segundo para asegurarnos de que los bloques
+         * realmente permanecen apilados.
+         */
+        if (IsCorrectStack() &&
+            !checkingVictory)
         {
-            Debug.Log("¡Apilamiento correcto!");
+            checkingVictory = true;
 
-            SceneManager.LoadScene("EndScene");
+            StartCoroutine(
+                CheckVictoryAfterDelay()
+            );
         }
     }
+
+
+    // =========================================================
+    // ESPERAR ANTES DE CONFIRMAR VICTORIA
+    // =========================================================
+
+    private IEnumerator CheckVictoryAfterDelay()
+    {
+        Debug.Log(
+            "[TargetZone] Pila correcta. Esperando " +
+            victoryDelay +
+            " segundos para confirmar..."
+        );
+
+        yield return new WaitForSeconds(
+            victoryDelay
+        );
+
+        /*
+         * Volvemos a limpiar la lista por si algún bloque
+         * salió de la zona durante este segundo.
+         */
+        CleanInvalidBlocks();
+
+        /*
+         * VOLVEMOS A COMPROBAR TODA LA PILA.
+         *
+         * Si el bloque se cayó, esto será false
+         * y NO habrá victoria.
+         */
+        if (IsCorrectStack())
+        {
+            sequenceCompleted = true;
+
+            Debug.Log(
+                "¡VICTORIA! La pila permaneció completa durante " +
+                victoryDelay +
+                " segundo."
+            );
+
+            if (gameManager != null)
+            {
+                gameManager.CompleteGame();
+            }
+        }
+        else
+        {
+            Debug.Log(
+                "[TargetZone] La pila se desarmó durante la espera. " +
+                "Victoria cancelada."
+            );
+        }
+
+        checkingVictory = false;
+    }
+
+
+    // =========================================================
+    // LIMPIAR BLOQUES INVÁLIDOS
+    // =========================================================
 
     private void CleanInvalidBlocks()
     {
@@ -57,6 +140,11 @@ public class TargetZone : MonoBehaviour
         }
     }
 
+
+    // =========================================================
+    // ACTUALIZAR PROGRESO
+    // =========================================================
+
     private void UpdateSequenceProgress()
     {
         if (gameManager == null ||
@@ -68,25 +156,10 @@ public class TargetZone : MonoBehaviour
         int newProgress =
             GetCorrectProgress();
 
-        /*
-         * Solo actualizamos el HUD cuando
-         * realmente cambió el progreso.
-         */
         if (newProgress == currentProgress)
             return;
 
         currentProgress = newProgress;
-
-        /*
-         * newProgress representa cuántos bloques
-         * correctos ya tenemos.
-         *
-         * Ejemplo:
-         *
-         * 0 correctos → objetivo índice 0
-         * 1 correcto  → objetivo índice 1
-         * 2 correctos → objetivo índice 2
-         */
 
         if (newProgress <
             gameManager.TargetSequence.Count)
@@ -103,6 +176,11 @@ public class TargetZone : MonoBehaviour
             );
         }
     }
+
+
+    // =========================================================
+    // OBTENER PROGRESO
+    // =========================================================
 
     private int GetCorrectProgress()
     {
@@ -121,18 +199,12 @@ public class TargetZone : MonoBehaviour
             FruitBlock block =
                 orderedBlocks[i];
 
-            /*
-             * Verificamos que sea un bloque válido.
-             */
             if (((1 << block.gameObject.layer) &
                  validBlockLayer) == 0)
             {
                 break;
             }
 
-            /*
-             * Verificamos que la fruta sea la correcta.
-             */
             FruitType blockFruitType =
                 block.FruitData.FruitType;
 
@@ -146,10 +218,6 @@ public class TargetZone : MonoBehaviour
                 break;
             }
 
-            /*
-             * A partir del segundo bloque verificamos
-             * que realmente esté apilado sobre el anterior.
-             */
             if (i > 0)
             {
                 FruitBlock lowerBlock =
@@ -170,6 +238,11 @@ public class TargetZone : MonoBehaviour
         return correctCount;
     }
 
+
+    // =========================================================
+    // TRIGGER ENTER
+    // =========================================================
+
     private void OnTriggerEnter(Collider other)
     {
         FruitBlock fruitBlock =
@@ -187,6 +260,11 @@ public class TargetZone : MonoBehaviour
         }
     }
 
+
+    // =========================================================
+    // TRIGGER EXIT
+    // =========================================================
+
     private void OnTriggerExit(Collider other)
     {
         FruitBlock fruitBlock =
@@ -203,6 +281,11 @@ public class TargetZone : MonoBehaviour
         }
     }
 
+
+    // =========================================================
+    // ORDENAR BLOQUES
+    // =========================================================
+
     public List<FruitBlock> GetBlocksOrderedByHeight()
     {
         return fruitBlocksInside
@@ -212,6 +295,11 @@ public class TargetZone : MonoBehaviour
             )
             .ToList();
     }
+
+
+    // =========================================================
+    // COMPROBAR PILA
+    // =========================================================
 
     private bool IsCorrectStack()
     {
@@ -273,6 +361,11 @@ public class TargetZone : MonoBehaviour
 
         return true;
     }
+
+
+    // =========================================================
+    // COMPROBAR SI ESTÁN APILADOS
+    // =========================================================
 
     private bool AreBlocksStacked(
         FruitBlock lowerBlock,
