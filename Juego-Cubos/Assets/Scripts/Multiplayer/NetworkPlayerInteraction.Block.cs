@@ -67,7 +67,12 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
             if (hit.normal.y > 0.5f)
             {
-                RequestDropServerRpc();
+                if (heldBlock != null)
+                {
+                    RequestDropServerRpc(
+                        heldBlock.NetworkObject
+                    );
+                }
                 return true;
             }
         }
@@ -113,7 +118,12 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
                 if (hit.normal.y > 0.5f)
                 {
-                    RequestDropServerRpc();
+                    if (heldBlock != null)
+                    {
+                        RequestDropServerRpc(
+                            heldBlock.NetworkObject
+                        );
+                    }
                     return true;
                 }
             }
@@ -202,7 +212,7 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
 
             // =====================================================
-            // DIRECCIÓN DEL EMPUJE
+            // DIRECCIï¿½N DEL EMPUJE
             // =====================================================
 
             Vector3 pushDirection =

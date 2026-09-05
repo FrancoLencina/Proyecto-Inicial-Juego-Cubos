@@ -21,10 +21,10 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
     [Header("Block Push")]
     [Tooltip("Multiplicador de fuerza con el que el jugador empuja los bloques.")]
-    public float blockPushForce = 1.5f;
+    public float blockPushForce = 8f;
 
     [Tooltip("Tiempo mínimo entre empujones enviados al servidor para el mismo bloque.")]
-    public float blockPushInterval = 0.08f;
+    public float blockPushInterval = 0.05f;
 
     private Rigidbody rb;
     private NetworkPlayerInteraction playerInteraction;
@@ -461,223 +461,212 @@ public class NetworkPlayerMovement : NetworkBehaviour
     // =========================================================
 
     private void HandleBlockCollision(
-        Collision collision,
-        NetworkFruitBlock block)
+    Collision collision,
+    NetworkFruitBlock block)
+{
+    if (block == null)
+        return;
+
+    if (block.NetworkObject == null)
+        return;
+
+    // -----------------------------------------------------
+    // NO EMPUJAR EL BLOQUE QUE ESTE JUGADOR ESTÁ SOSTENIENDO
+    // -----------------------------------------------------
+
+    if (block.IsBeingHeld &&
+        block.HolderClientId ==
+        NetworkManager.LocalClientId)
     {
-        if (block == null)
-            return;
-
-
-        if (block.NetworkObject == null)
-            return;
-
-
-        // -----------------------------------------------------
-        // SI ESTE JUGADOR ESTÁ SOSTENIENDO EL BLOQUE
-        // -----------------------------------------------------
-
-        if (block.IsBeingHeld &&
-            block.HolderClientId ==
-            NetworkManager.LocalClientId)
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // OBTENER VELOCIDAD
-        // -----------------------------------------------------
-
-        Vector3 playerVelocity =
-            rb.linearVelocity;
-
-
-        Vector3 horizontalVelocity =
-            new Vector3(
-                playerVelocity.x,
-                0f,
-                playerVelocity.z
-            );
-
-
-        if (horizontalVelocity.sqrMagnitude <
-            0.01f)
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // BUSCAR NORMAL DE COLISIÓN
-        // -----------------------------------------------------
-
-        Vector3 pushDirection =
-            Vector3.zero;
-
-
-        foreach (ContactPoint contact
-                 in collision.contacts)
-        {
-            Vector3 normal =
-                contact.normal;
-
-
-            // La normal apunta del bloque hacia
-            // el jugador.
-            //
-            // Por eso invertimos la normal para
-            // obtener la dirección del empuje.
-
-            Vector3 direction =
-                -normal;
-
-
-            direction.y = 0f;
-
-
-            if (direction.sqrMagnitude >
-                0.001f)
-            {
-                pushDirection =
-                    direction.normalized;
-
-                break;
-            }
-        }
-
-
-        if (pushDirection == Vector3.zero)
-            return;
-
-
-        // -----------------------------------------------------
-        // COMPROBAR QUE REALMENTE ESTAMOS EMPUJANDO
-        // -----------------------------------------------------
-
-        float movementIntoBlock =
-            Vector3.Dot(
-                horizontalVelocity,
-                pushDirection
-            );
-
-
-        if (movementIntoBlock <= 0.05f)
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // LIMITAR FRECUENCIA
-        // -----------------------------------------------------
-
-        float currentTime =
-            Time.time;
-
-
-        if (lastBlockPushTimes.TryGetValue(
-            block.NetworkObject,
-            out float lastPushTime))
-        {
-            if (currentTime - lastPushTime <
-                blockPushInterval)
-            {
-                return;
-            }
-        }
-
-
-        lastBlockPushTimes[
-            block.NetworkObject
-        ] = currentTime;
-
-
-        // -----------------------------------------------------
-        // CALCULAR IMPULSO
-        // -----------------------------------------------------
-
-        float pushStrength =
-            movementIntoBlock *
-            blockPushForce;
-
-
-        Vector3 impulse =
-            pushDirection *
-            pushStrength;
-
-
-        // -----------------------------------------------------
-        // ENVIAR AL SERVIDOR
-        // -----------------------------------------------------
-
-        PushBlockServerRpc(
-            block.NetworkObject,
-            impulse
-        );
+        return;
     }
 
+    // -----------------------------------------------------
+    // OBTENER DIRECCIÓN DE MOVIMIENTO DEL INPUT
+    //
+    // NO usamos rb.linearVelocity porque cuando el jugador
+    // choca contra un bloque kinematic, Unity puede dejar
+    // la velocidad física en cero.
+    // -----------------------------------------------------
 
+    Vector3 horizontalMovement =
+        new Vector3(
+            movement.x,
+            0f,
+            movement.z
+        );
+
+    if (horizontalMovement.sqrMagnitude <
+        0.01f)
+    {
+        return;
+    }
+
+    // -----------------------------------------------------
+    // BUSCAR DIRECCIÓN DEL EMPUJE
+    // -----------------------------------------------------
+
+    Vector3 pushDirection =
+        Vector3.zero;
+
+    foreach (ContactPoint contact
+             in collision.contacts)
+    {
+        Vector3 direction =
+            -contact.normal;
+
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude >
+            0.001f)
+        {
+            pushDirection =
+                direction.normalized;
+
+            break;
+        }
+    }
+
+    if (pushDirection == Vector3.zero)
+        return;
+
+    // -----------------------------------------------------
+    // COMPROBAR QUE EL INPUT REALMENTE VA HACIA EL BLOQUE
+    // -----------------------------------------------------
+
+    Vector3 movementDirection =
+        horizontalMovement.normalized;
+
+    float movementIntoBlock =
+        Vector3.Dot(
+            movementDirection,
+            pushDirection
+        );
+
+    // Si el jugador no está intentando avanzar hacia el bloque,
+    // no aplicar empuje.
+
+    if (movementIntoBlock <= 0.1f)
+        return;
+
+    // -----------------------------------------------------
+    // LIMITAR FRECUENCIA
+    // -----------------------------------------------------
+
+    float currentTime =
+        Time.time;
+
+    if (lastBlockPushTimes.TryGetValue(
+        block.NetworkObject,
+        out float lastPushTime))
+    {
+        if (currentTime - lastPushTime <
+            blockPushInterval)
+        {
+            return;
+        }
+    }
+
+    lastBlockPushTimes[
+        block.NetworkObject
+    ] = currentTime;
+
+    // -----------------------------------------------------
+    // CALCULAR IMPULSO
+    // -----------------------------------------------------
+
+    float pushStrength =
+    speed *
+    blockPushForce;
+
+    Vector3 impulse =
+    pushDirection *
+    pushStrength;
+
+    // -----------------------------------------------------
+    // ENVIAR AL SERVIDOR
+    // -----------------------------------------------------
+
+    PushBlockServerRpc(
+        block.NetworkObject,
+        impulse
+    );
+}
     // =========================================================
     // SERVER RPC - EMPUJAR BLOQUE
     // =========================================================
 
-    [ServerRpc]
+   [ServerRpc]
     private void PushBlockServerRpc(
         NetworkObjectReference blockReference,
-        Vector3 impulse)
+        Vector3 impulse
+    )
     {
-        // -----------------------------------------------------
-        // BUSCAR BLOQUE
-        // -----------------------------------------------------
+        Debug.Log(
+            "[BODY PUSH SERVER 1] RPC recibido"
+        );
 
         if (!blockReference.TryGet(
-            out NetworkObject networkObject))
+            out NetworkObject networkObject
+        ))
         {
+            Debug.Log(
+                "[BODY PUSH SERVER STOP] No se encontró NetworkObject"
+            );
+
             return;
         }
 
-
         NetworkFruitBlock block =
-            networkObject.GetComponent<
-                NetworkFruitBlock
-            >();
-
+            networkObject.GetComponent<NetworkFruitBlock>();
 
         if (block == null)
+        {
+            Debug.Log(
+                "[BODY PUSH SERVER STOP] NetworkFruitBlock es null"
+            );
+
             return;
+        }
 
-
-        // -----------------------------------------------------
-        // NO EMPUJAR BLOQUES SOSTENIDOS
-        // -----------------------------------------------------
+        Debug.Log(
+            "[BODY PUSH SERVER 2] Bloque encontrado | Held: " +
+            block.IsBeingHeld
+        );
 
         if (block.IsBeingHeld)
+        {
+            Debug.Log(
+                "[BODY PUSH SERVER STOP] Bloque sostenido"
+            );
+
             return;
+        }
 
+        float maxImpulse = 3f;
 
-        // -----------------------------------------------------
-        // LIMITAR IMPULSO
-        // -----------------------------------------------------
-
-        float maxImpulse =
-            3f;
-
-
-        if (impulse.magnitude >
-            maxImpulse)
+        if (impulse.magnitude > maxImpulse)
         {
             impulse =
                 impulse.normalized *
                 maxImpulse;
         }
 
+        Debug.Log(
+            "[BODY PUSH SERVER 3] Aplicando impulso: " +
+            impulse
+        );
 
-        // -----------------------------------------------------
-        // APLICAR FÍSICA EN SERVIDOR
-        // -----------------------------------------------------
+        Debug.Log(
+            "[BODY PUSH SERVER 4] Llamando ApplyServerImpulse"
+        );
 
         block.ApplyServerImpulse(
             impulse
+        );
+
+        Debug.Log(
+            "[BODY PUSH SERVER 5] ApplyServerImpulse finalizado"
         );
     }
 }

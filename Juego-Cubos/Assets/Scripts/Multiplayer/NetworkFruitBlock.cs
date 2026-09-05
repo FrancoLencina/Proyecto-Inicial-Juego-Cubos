@@ -313,7 +313,8 @@ public class NetworkFruitBlock : NetworkBehaviour
     /// bloques sin simular físicamente el bloque localmente.
     /// </summary>
     public void ApplyServerImpulse(
-        Vector3 impulse)
+        Vector3 impulse
+    )
     {
         if (!IsServer)
             return;
@@ -333,11 +334,15 @@ public class NetworkFruitBlock : NetworkBehaviour
         if (blockRigidbody.isKinematic)
             return;
 
+        Vector3 horizontalImpulse =
+            new Vector3(
+                impulse.x,
+                0f,
+                impulse.z
+            );
 
-        blockRigidbody.AddForce(
-            impulse,
-            ForceMode.Impulse
-        );
+        blockRigidbody.linearVelocity +=
+            horizontalImpulse;
     }
 
     // =========================================================
@@ -388,16 +393,15 @@ public class NetworkFruitBlock : NetworkBehaviour
     // SERVER RPC - REQUEST PUSH
     // =========================================================
 
-    [ServerRpc(
-        RequireOwnership = false
+    [Rpc(
+        SendTo.Server,
+        InvokePermission = RpcInvokePermission.Everyone
     )]
     private void RequestPushServerRpc(
         Vector3 force
     )
     {
-        ApplyNetworkPush(
-            force
-        );
+        ApplyNetworkPush(force);
     }
 
 

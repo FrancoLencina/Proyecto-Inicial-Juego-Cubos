@@ -67,3 +67,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f43060ec4e04e5642ac9543dcf4331ce, type: 2}
   sequenceLength: 5
   sequenceUI: {fileID: 0}
+  gameTime: 190
+  victoryPanel: {fileID: 0}
+  resultText: {fileID: 0}
+  playerMovement: {fileID: 0}
+  playerCamera: {fileID: 0}
+  mainMenuSceneName: MainMenu

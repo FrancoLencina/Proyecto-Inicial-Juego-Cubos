@@ -74,7 +74,9 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
         {
             if (Keyboard.current.eKey.wasPressedThisFrame)
             {
-                RequestDropServerRpc();
+                RequestDropServerRpc(
+                    heldBlock.NetworkObject
+                );
             }
 
             return;
@@ -333,29 +335,55 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
     }
 
 
-    // =========================================================
-    // REQUEST DROP
-    // =========================================================
-
     [ServerRpc]
     private void RequestDropServerRpc(
+        NetworkObjectReference blockReference,
         ServerRpcParams rpcParams = default
     )
     {
         // -----------------------------------------------------
-        // VERIFICAR QUE EL JUGADOR TENGA UN BLOQUE
+        // BUSCAR EL BLOQUE
         // -----------------------------------------------------
 
-        if (heldBlock == null)
+        if (!blockReference.TryGet(
+            out NetworkObject networkObject
+        ))
+        {
             return;
+        }
 
 
-        NetworkObject networkObject =
-            heldBlock.NetworkObject;
+        NetworkFruitBlock block =
+            networkObject.GetComponent<
+                NetworkFruitBlock
+            >();
 
 
-        if (networkObject == null)
+        if (block == null)
+        {
             return;
+        }
+
+
+        // -----------------------------------------------------
+        // VERIFICAR QUE EL BLOQUE ESTÉ AGARRADO
+        // -----------------------------------------------------
+
+        if (!block.IsBeingHeld)
+        {
+            return;
+        }
+
+
+        // -----------------------------------------------------
+        // VERIFICAR QUE EL CLIENTE SEA EL QUE LO SOSTIENE
+        // -----------------------------------------------------
+
+        if (block.HolderClientId !=
+            rpcParams.Receive.SenderClientId)
+        {
+            return;
+        }
 
 
         // -----------------------------------------------------
@@ -369,17 +397,11 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
         }
 
 
-        NetworkObjectReference blockReference =
-            new NetworkObjectReference(
-                networkObject
-            );
-
-
         // -----------------------------------------------------
         // ACTUALIZAR ESTADO
         // -----------------------------------------------------
 
-        heldBlock.SetHeldState(
+        block.SetHeldState(
             false,
             NetworkManager.ServerClientId
         );
@@ -395,12 +417,12 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
 
         // -----------------------------------------------------
-        // INFORMAR A LOS CLIENTES
+        // INFORMAR AL JUGADOR
         // -----------------------------------------------------
 
         ClearHeldBlockClientRpc(
-    rpcParams.Receive.SenderClientId
-);
+            rpcParams.Receive.SenderClientId
+        );
     }
 
 

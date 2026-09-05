@@ -379,8 +379,8 @@ MonoBehaviour:
   groundCheckHeight: 0
   groundCheckRadius: 0.25
   groundCheckDistance: 1
-  blockPushForce: 1.5
-  blockPushInterval: 0.08
+  blockPushForce: 10
+  blockPushInterval: 0.05
 --- !u!1 &4249321013474277945
 GameObject:
   m_ObjectHideFlags: 0
