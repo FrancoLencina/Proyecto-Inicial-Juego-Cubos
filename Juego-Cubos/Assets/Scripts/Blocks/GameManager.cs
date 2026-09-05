@@ -11,9 +11,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int sequenceLength = 5;
     [SerializeField] private SequenceUI sequenceUI;
 
-    [Header("Timer")]
-    [SerializeField] private float gameTime = 60f;
-
     [Header("Result")]
     [SerializeField] private GameObject victoryPanel;
     [SerializeField] private TMP_Text resultText;
@@ -27,9 +24,8 @@ public class GameManager : MonoBehaviour
 
     private List<FruitData> targetSequence;
 
-    private float remainingTime;
-
     private bool gameCompleted = false;
+    private bool didTimeRunOut = false;
     private bool waitingForPlayerToLand = false;
 
     public IReadOnlyList<FruitData> TargetSequence => targetSequence;
@@ -39,8 +35,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
 
         GenerateSequence();
-
-        remainingTime = gameTime;
 
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
@@ -76,7 +70,7 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("[GameManager] TEST: Derrota activada con O.");
 
-        remainingTime = 0f;
+        LoseGame();
     }
 
     if (gameCompleted)
@@ -85,21 +79,14 @@ public class GameManager : MonoBehaviour
         return;
     }
 
-    UpdateTimer();
+    if (didTimeRunOut){
+        LoseGame();
+        return;
+        }
     }
 
-    private void UpdateTimer()
-    {
-        remainingTime -= Time.deltaTime;
-
-        if (remainingTime <= 0f)
-        {
-            remainingTime = 0f;
-
-            Debug.Log("[GameManager] ¡Se terminó el tiempo!");
-
-            LoseGame();
-        }
+    public void timeRanOut(){
+        didTimeRunOut = true;
     }
 
     private void GenerateSequence()

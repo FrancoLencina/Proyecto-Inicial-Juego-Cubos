@@ -5,7 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class Timer: MonoBehaviour {
    
-   [SerializeField] private float targetTime = 60.0f;
+   [SerializeField] private GameManager gameManager;
+   [SerializeField] private float targetTime;
    [SerializeField] private float timeRemaining;
    private bool isCountingDown = false;
    [SerializeField] private TMP_Text textTimer;
@@ -42,6 +43,6 @@ public class Timer: MonoBehaviour {
 
    public void timerStop() {
       isCountingDown = false;
-      SceneManager.LoadScene("EndScene");
+      gameManager.timeRanOut();
     }
 }
