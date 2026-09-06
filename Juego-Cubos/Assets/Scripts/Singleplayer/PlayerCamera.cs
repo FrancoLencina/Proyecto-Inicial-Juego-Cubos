@@ -30,25 +30,32 @@ public class PlayerCamera : MonoBehaviour
     // START
     // =========================================================
 
-void Start()
-{
-    currentVerticalRotation = verticalAngle;
-
-    if (player != null)
+    void Start()
     {
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        // Cargar sensibilidad guardada.
+        sensitivity = PlayerPrefs.GetFloat(
+            "MouseSensitivity",
+            sensitivity
+        );
 
-        SetPlayer(player);
+        currentVerticalRotation = verticalAngle;
+
+        if (player != null)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+
+            SetPlayer(player);
+        }
+        else
+        {
+            // Esta cámara no está controlando a ningún jugador.
+            // Dejamos el cursor libre para el menú.
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
     }
-    else
-    {
-        // Esta cámara no está controlando a ningún jugador.
-        // Dejamos el cursor libre para el menú.
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-    }
-}
+
 
     // =========================================================
     // UPDATE
@@ -169,10 +176,6 @@ void Start()
 
         if (!enabled)
         {
-            /*
-             * Liberamos el cursor cuando se desactiva
-             * el control de cámara.
-             */
             Cursor.lockState =
                 CursorLockMode.None;
 
@@ -180,9 +183,6 @@ void Start()
         }
         else
         {
-            /*
-             * Volvemos al comportamiento normal del juego.
-             */
             Cursor.lockState =
                 CursorLockMode.Locked;
 
@@ -219,5 +219,24 @@ void Start()
         Debug.Log(
             "PlayerCamera: Player asignado correctamente."
         );
+    }
+
+
+    // =========================================================
+    // CONFIGURACIÓN DE SENSIBILIDAD
+    // =========================================================
+
+    public void SetSensitivity(
+        float newSensitivity
+    )
+    {
+        sensitivity = newSensitivity;
+
+        PlayerPrefs.SetFloat(
+            "MouseSensitivity",
+            sensitivity
+        );
+
+        PlayerPrefs.Save();
     }
 }

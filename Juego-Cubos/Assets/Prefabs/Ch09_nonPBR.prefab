@@ -608,6 +608,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   speed: 8
+  sprintMultiplier: 1.5
   jumpForce: 5
   jumpHoldForce: 4
   maxJumpTime: 0.6

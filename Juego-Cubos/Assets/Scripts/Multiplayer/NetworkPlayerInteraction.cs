@@ -41,6 +41,8 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
     private Rigidbody heldRigidbody;
     private BoxCollider heldCollider;
 
+    private PlayerControls controls;
+
 
     // =========================================================
     // PROPIEDAD PÚBLICA
@@ -49,6 +51,24 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
     public bool IsHoldingBlock =>
         heldBlock != null;
 
+    private void Awake()
+    {
+        controls = new PlayerControls();
+
+        InputSettings.LoadBindings(
+            controls
+        );
+    }
+
+    private void OnEnable()
+    {
+        controls.Enable();
+    }
+
+    private void OnDisable()
+    {
+        controls.Disable();
+    }
 
     // =========================================================
     // UPDATE
@@ -60,19 +80,14 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
         if (!IsOwner)
             return;
-
-
-        if (Keyboard.current == null)
-            return;
-
-
+            
         // -----------------------------------------------------
         // SI ESTÁ SOSTENIENDO UN BLOQUE
         // -----------------------------------------------------
 
         if (heldBlock != null)
         {
-            if (Keyboard.current.eKey.wasPressedThisFrame)
+            if (controls.Player.Interact.WasPressedThisFrame())
             {
                 RequestDropServerRpc(
                     heldBlock.NetworkObject
@@ -120,7 +135,7 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
                 return;
 
 
-            if (Keyboard.current.eKey.wasPressedThisFrame)
+            if (controls.Player.Interact.WasPressedThisFrame())
             {
                 RequestGrabServerRpc(
                     block.NetworkObject
@@ -128,15 +143,6 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
             }
         }
     }
-
-
-    // =========================================================
-    // FIXED UPDATE
-    // =========================================================
-
-    // =========================================================
-    // FIXED UPDATE
-    // =========================================================
 
     private void FixedUpdate()
     {

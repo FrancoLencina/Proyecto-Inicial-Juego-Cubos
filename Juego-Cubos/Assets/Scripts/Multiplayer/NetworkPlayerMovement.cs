@@ -8,6 +8,9 @@ public class NetworkPlayerMovement : NetworkBehaviour
     [Header("Movement")]
     public float speed = 5f;
 
+    [Header("Sprint")]
+    public float sprintMultiplier = 1.5f;
+
     [Header("Jump")]
     public float jumpForce = 5f;
     public float jumpHoldForce = 15f;
@@ -28,7 +31,10 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
     private Rigidbody rb;
     private NetworkPlayerInteraction playerInteraction;
+    private PlayerControls controls;
     private Vector3 movement;
+
+    private bool isSprinting;
 
     private bool isGrounded;
     private bool isJumping;
@@ -38,11 +44,32 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
     private float pendingRotation;
 
-
     // Guarda cuándo se envió el último impulso para cada bloque.
     private Dictionary<NetworkObject, float> lastBlockPushTimes =
         new Dictionary<NetworkObject, float>();
 
+// =========================================================
+// AWAKE
+// =========================================================
+
+private void Awake()
+{
+    controls = new PlayerControls();
+
+    InputSettings.LoadBindings(
+        controls
+    );
+}
+
+private void OnEnable()
+{
+    controls.Enable();
+}
+
+private void OnDisable()
+{
+    controls.Disable();
+}
 
     // =========================================================
     // NETWORK SPAWN
@@ -77,10 +104,6 @@ public class NetworkPlayerMovement : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        if (Keyboard.current == null)
-            return;
-
-
         CheckGround();
 
 
@@ -88,21 +111,17 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // INPUT DE MOVIMIENTO
         // =====================================================
 
-        float horizontal = 0f;
-        float vertical = 0f;
+        Vector2 moveInput =
+        controls.Player.Move.ReadValue<Vector2>();
 
+        float horizontal =
+            moveInput.x;
 
-        if (Keyboard.current.aKey.isPressed)
-            horizontal = -1f;
+        float vertical =
+            moveInput.y;
 
-        if (Keyboard.current.dKey.isPressed)
-            horizontal = 1f;
-
-        if (Keyboard.current.wKey.isPressed)
-            vertical = 1f;
-
-        if (Keyboard.current.sKey.isPressed)
-            vertical = -1f;
+        isSprinting =
+            controls.Player.Sprint.IsPressed();
 
 
         movement =
@@ -118,7 +137,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // COMENZAR SALTO
         // =====================================================
 
-        if (Keyboard.current.spaceKey.wasPressedThisFrame &&
+        if (controls.Player.Jump.WasPressedThisFrame() &&
             isGrounded)
         {
             rb.AddForce(
@@ -136,7 +155,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // SOLTAR ESPACIO
         // =====================================================
 
-        if (Keyboard.current.spaceKey.wasReleasedThisFrame)
+        if (controls.Player.Jump.WasReleasedThisFrame())
         {
             isJumping = false;
         }
@@ -155,11 +174,6 @@ public class NetworkPlayerMovement : NetworkBehaviour
         pendingRotation += rotation;
     }
 
-
-    // =========================================================
-    // FIXED UPDATE
-    // =========================================================
-
     private void FixedUpdate()
     {
         if (!IsOwner)
@@ -174,8 +188,14 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // MOVIMIENTO
         // =====================================================
 
+        float currentSpeed =
+            isSprinting
+                ? speed * sprintMultiplier
+                : speed;
+
+
         Vector3 desiredVelocity =
-            movement * speed;
+            movement * currentSpeed;
 
 
         Vector3 desiredMovement =
@@ -310,7 +330,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // =====================================================
 
         if (isJumping &&
-            Keyboard.current.spaceKey.isPressed)
+            controls.Player.Jump.IsPressed())
         {
             if (jumpTime < maxJumpTime)
             {

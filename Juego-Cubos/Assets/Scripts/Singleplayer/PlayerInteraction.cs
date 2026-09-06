@@ -4,25 +4,46 @@ using UnityEngine.InputSystem;
 public partial class PlayerInteraction : MonoBehaviour
 {
     [Header("Interaction")]
+
     [SerializeField] private Camera playerCamera;
+
     [SerializeField] private LayerMask fruitBlockLayer;
+
     [SerializeField] private Transform holdPoint;
 
+
     [Header("Held Block Collision")]
+
     [SerializeField] private LayerMask heldBlockBlockingLayers;
 
+
     [Header("Slope")]
+
     [SerializeField] private float slopeNormalThreshold = 0.5f;
 
+
     [Header("Rotation Correction")]
+
     [SerializeField] private float maxRotationCorrection = 0.25f;
+
     [SerializeField] private float rotationCorrectionStep = 0.01f;
 
+
     [Header("Rotation Prediction")]
+
     [SerializeField] private int rotationSamples = 30;
 
+
     [Header("Push")]
+
     [SerializeField] private float pushForce = 3f;
+
+
+    // =========================================================
+    // INPUT
+    // =========================================================
+
+    private PlayerControls controls;
 
 
     // =========================================================
@@ -30,18 +51,49 @@ public partial class PlayerInteraction : MonoBehaviour
     // =========================================================
 
     private GameObject heldObject;
+
     private Rigidbody heldRigidbody;
+
     private BoxCollider heldCollider;
 
     private int originalLayer;
 
 
     // =========================================================
-    // PROPIEDAD P�BLICA
+    // PROPIEDAD PÚBLICA
     // =========================================================
 
     public bool IsHoldingBlock =>
         heldObject != null;
+
+
+    // =========================================================
+    // AWAKE
+    // =========================================================
+
+    private void Awake()
+    {
+        controls = new PlayerControls();
+
+        InputSettings.LoadBindings(
+            controls
+        );
+    }
+
+
+    // =========================================================
+    // ENABLE / DISABLE INPUT
+    // =========================================================
+
+    private void OnEnable()
+    {
+        controls.Enable();
+    }
+
+    private void OnDisable()
+    {
+        controls.Disable();
+    }
 
 
     // =========================================================
@@ -51,12 +103,12 @@ public partial class PlayerInteraction : MonoBehaviour
     private void Update()
     {
         // -----------------------------------------------------
-        // SI EST� SOSTENIENDO UN BLOQUE
+        // SI ESTÁ SOSTENIENDO UN BLOQUE
         // -----------------------------------------------------
 
         if (heldObject != null)
         {
-            if (Keyboard.current.eKey.wasPressedThisFrame)
+            if (controls.Player.Interact.WasPressedThisFrame())
             {
                 DropObject();
             }
@@ -86,7 +138,7 @@ public partial class PlayerInteraction : MonoBehaviour
             fruitBlockLayer
         ))
         {
-            if (Keyboard.current.eKey.wasPressedThisFrame)
+            if (controls.Player.Interact.WasPressedThisFrame())
             {
                 GrabObject(
                     hit.collider.gameObject
@@ -138,13 +190,14 @@ public partial class PlayerInteraction : MonoBehaviour
             ))
             {
                 DropObject();
+
                 return;
             }
         }
 
 
         // =====================================================
-        // POSICI�N SEGURA
+        // POSICIÓN SEGURA
         // =====================================================
 
         Vector3 safePosition =
@@ -182,8 +235,15 @@ public partial class PlayerInteraction : MonoBehaviour
         );
     }
 
-    public void SetPlayerCamera(Camera newCamera)
-{
-    playerCamera = newCamera;
-}
+
+    // =========================================================
+    // ASIGNAR CÁMARA
+    // =========================================================
+
+    public void SetPlayerCamera(
+        Camera newCamera
+    )
+    {
+        playerCamera = newCamera;
+    }
 }

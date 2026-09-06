@@ -6,6 +6,9 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     public float speed = 5f;
 
+    [Header("Sprint")]
+    public float sprintMultiplier = 1.5f;
+
     [Header("Jump")]
     public float jumpForce = 5f;
     public float jumpHoldForce = 15f;
@@ -22,7 +25,11 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
     private PlayerInteraction playerInteraction;
 
+    private PlayerControls controls;
+
     private Vector3 movement;
+
+    private bool isSprinting;
 
     private bool isGrounded;
     public bool IsGrounded => isGrounded;
@@ -34,6 +41,35 @@ public class PlayerMovement : MonoBehaviour
 
     // Rotación solicitada por la cámara.
     private float pendingRotation;
+
+
+    // =========================================================
+    // AWAKE
+    // =========================================================
+
+    void Awake()
+    {
+        controls = new PlayerControls();
+
+        InputSettings.LoadBindings(
+            controls
+        );
+    }
+
+
+    // =========================================================
+    // ENABLE / DISABLE INPUT
+    // =========================================================
+
+    void OnEnable()
+    {
+        controls.Enable();
+    }
+
+    void OnDisable()
+    {
+        controls.Disable();
+    }
 
 
     // =========================================================
@@ -65,22 +101,17 @@ public class PlayerMovement : MonoBehaviour
         // INPUT DE MOVIMIENTO
         // =====================================================
 
-        float horizontal = 0f;
-        float vertical = 0f;
+        Vector2 moveInput =
+            controls.Player.Move.ReadValue<Vector2>();
 
+        float horizontal =
+            moveInput.x;
 
-        if (Keyboard.current.aKey.isPressed)
-            horizontal = -1f;
+        float vertical =
+            moveInput.y;
 
-        if (Keyboard.current.dKey.isPressed)
-            horizontal = 1f;
-
-        if (Keyboard.current.wKey.isPressed)
-            vertical = 1f;
-
-        if (Keyboard.current.sKey.isPressed)
-            vertical = -1f;
-
+        isSprinting =
+            controls.Player.Sprint.IsPressed();
 
         animator.SetFloat("VelX", horizontal);
         animator.SetFloat("VelY", vertical);
@@ -98,7 +129,7 @@ public class PlayerMovement : MonoBehaviour
         // COMENZAR SALTO
         // =====================================================
 
-        if (Keyboard.current.spaceKey.wasPressedThisFrame &&
+        if (controls.Player.Jump.WasPressedThisFrame() &&
             isGrounded)
         {
             rb.AddForce(
@@ -115,10 +146,10 @@ public class PlayerMovement : MonoBehaviour
 
 
         // =====================================================
-        // SOLTAR ESPACIO
+        // SOLTAR TECLA DE SALTO
         // =====================================================
 
-        if (Keyboard.current.spaceKey.wasReleasedThisFrame)
+        if (controls.Player.Jump.WasReleasedThisFrame())
         {
             isJumping = false;
         }
@@ -149,8 +180,14 @@ public class PlayerMovement : MonoBehaviour
         // MOVIMIENTO
         // =====================================================
 
+        float currentSpeed =
+            isSprinting
+                ? speed * sprintMultiplier
+                : speed;
+
+
         Vector3 desiredVelocity =
-            movement * speed;
+            movement * currentSpeed;
 
 
         Vector3 desiredMovement =
@@ -297,7 +334,7 @@ public class PlayerMovement : MonoBehaviour
         // =====================================================
 
         if (isJumping &&
-            Keyboard.current.spaceKey.isPressed)
+            controls.Player.Jump.IsPressed())
         {
             if (jumpTime < maxJumpTime)
             {
