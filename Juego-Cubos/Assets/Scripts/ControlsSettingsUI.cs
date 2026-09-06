@@ -15,6 +15,7 @@ public class ControlsSettingsUI : MonoBehaviour
     [SerializeField] private Button jumpButton;
     [SerializeField] private Button interactButton;
     [SerializeField] private Button sprintButton;
+    [SerializeField] private Button pauseButton;
 
     [Header("Button Texts")]
     [SerializeField] private TMP_Text moveUpText;
@@ -25,6 +26,7 @@ public class ControlsSettingsUI : MonoBehaviour
     [SerializeField] private TMP_Text jumpText;
     [SerializeField] private TMP_Text interactText;
     [SerializeField] private TMP_Text sprintText;
+    [SerializeField] private TMP_Text pauseText;
 
     [Header("Other")]
     [SerializeField] private Button resetButton;
@@ -136,6 +138,14 @@ public class ControlsSettingsUI : MonoBehaviour
                 "Sprint",
                 0,
                 sprintText
+            )
+        );
+
+        pauseButton.onClick.AddListener(
+            () => StartRebinding(
+                "Pause",
+                0,
+                pauseText
             )
         );
 
@@ -275,6 +285,12 @@ public class ControlsSettingsUI : MonoBehaviour
         sprintText.text =
             GetBindingDisplayName(
                 "Sprint",
+                0
+            );
+
+        pauseText.text =
+            GetBindingDisplayName(
+                "Pause",
                 0
             );
     }
