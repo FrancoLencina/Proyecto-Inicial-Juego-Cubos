@@ -221,6 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a104908f25102e429b5d104bef2e5ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Timer
+  gameManager: {fileID: 1550033312}
   targetTime: 190
   timeRemaining: 0
   textTimer: {fileID: 182338342}
