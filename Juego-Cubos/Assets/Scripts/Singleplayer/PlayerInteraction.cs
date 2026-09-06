@@ -3,7 +3,17 @@ using UnityEngine.InputSystem;
 
 public partial class PlayerInteraction : MonoBehaviour
 {
+
+    public enum PlayerNumber
+    {
+        Player1,
+        Player2
+    }
+    
     [Header("Interaction")]
+
+    [SerializeField] private PlayerNumber playerNumber =
+        PlayerNumber.Player1;
 
     [SerializeField] private Camera playerCamera;
 
@@ -97,6 +107,34 @@ public partial class PlayerInteraction : MonoBehaviour
 
 
     // =========================================================
+    // INPUT DE INTERACCIÓN
+    // =========================================================
+
+    private bool InteractionPressed()
+    {
+        if (Keyboard.current == null)
+            return false;
+
+        // -----------------------------------------------------
+        // PLAYER 1
+        // -----------------------------------------------------
+
+        if (playerNumber ==
+            PlayerNumber.Player1)
+        {
+            return Keyboard.current.eKey.wasPressedThisFrame;
+        }
+
+
+        // -----------------------------------------------------
+        // PLAYER 2
+        // -----------------------------------------------------
+
+        return Keyboard.current.numpadEnterKey.wasPressedThisFrame;
+    }
+
+
+    // =========================================================
     // UPDATE
     // =========================================================
 
@@ -108,7 +146,7 @@ public partial class PlayerInteraction : MonoBehaviour
 
         if (heldObject != null)
         {
-            if (controls.Player.Interact.WasPressedThisFrame())
+            if (InteractionPressed())
             {
                 DropObject();
             }
@@ -120,6 +158,10 @@ public partial class PlayerInteraction : MonoBehaviour
         // -----------------------------------------------------
         // BUSCAR FRUITBLOCK
         // -----------------------------------------------------
+
+        if (playerCamera == null)
+            return;
+
 
         Ray ray =
             playerCamera.ViewportPointToRay(
@@ -138,7 +180,7 @@ public partial class PlayerInteraction : MonoBehaviour
             fruitBlockLayer
         ))
         {
-            if (controls.Player.Interact.WasPressedThisFrame())
+            if (InteractionPressed())
             {
                 GrabObject(
                     hit.collider.gameObject

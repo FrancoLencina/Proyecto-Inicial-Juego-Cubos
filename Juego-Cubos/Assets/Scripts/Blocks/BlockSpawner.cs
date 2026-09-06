@@ -3,17 +3,35 @@ using UnityEngine;
 
 public class BlockSpawner : MonoBehaviour
 {
+    [Header("References")]
     [SerializeField] private FruitBlock fruitBlockPrefab;
     [SerializeField] private List<FruitData> availableFruits;
+    [SerializeField] private Collider spawnArea;
 
+    [Header("Spawn")]
     [SerializeField] private int blocksPerFruit = 2;
 
-    [SerializeField] private Collider spawnArea;
+    [SerializeField] private float spawnHeight = 1f;
+
+    [Header("Collision")]
+    [SerializeField] private float blockCheckRadius = 0.45f;
+
+    [SerializeField] private int maxSpawnAttempts = 30;
+
+
+    // =========================================================
+    // START
+    // =========================================================
 
     private void Start()
     {
         SpawnBlocks();
     }
+
+
+    // =========================================================
+    // SPAWN BLOCKS
+    // =========================================================
 
     private void SpawnBlocks()
     {
@@ -26,40 +44,149 @@ public class BlockSpawner : MonoBehaviour
         }
     }
 
+
+    // =========================================================
+    // SPAWN BLOCK
+    // =========================================================
+
     private void SpawnBlock(FruitData fruit)
     {
-        Vector3 spawnPosition = GetRandomSpawnPosition();
+        Vector3 spawnPosition;
 
-        Debug.Log("Generando " + fruit.DisplayName + " en posici�n: " + spawnPosition);
+        bool foundPosition =
+            TryGetRandomSpawnPosition(
+                out spawnPosition
+            );
 
-        FruitBlock newBlock = Instantiate(
-            fruitBlockPrefab,
-            spawnPosition,
-            Quaternion.identity
-        );
-
-        newBlock.SetFruitData(fruit);
-    }
-
-    private Vector3 GetRandomSpawnPosition()
-    {
-        Bounds bounds = spawnArea.bounds;
-
-        float randomX = Random.Range(bounds.min.x, bounds.max.x);
-        float randomZ = Random.Range(bounds.min.z, bounds.max.z);
-
-        float spawnY = bounds.max.y + 1f;
-
-        float blockHeight = 1f;
-
-        while (Physics.CheckBox(
-            new Vector3(randomX, spawnY, randomZ),
-            new Vector3(0.45f, 0.45f, 0.45f)
-        ))
+        if (!foundPosition)
         {
-            spawnY += blockHeight;
+            Debug.LogWarning(
+                "No se encontró una posición libre para " +
+                fruit.DisplayName
+            );
+
+            return;
         }
 
-        return new Vector3(randomX, spawnY, randomZ);
+
+        Debug.Log(
+            "Generando " +
+            fruit.DisplayName +
+            " en posición: " +
+            spawnPosition
+        );
+
+
+        FruitBlock newBlock =
+            Instantiate(
+                fruitBlockPrefab,
+                spawnPosition,
+                Quaternion.identity
+            );
+
+
+        newBlock.SetFruitData(
+            fruit
+        );
+    }
+
+
+    // =========================================================
+    // BUSCAR POSICIÓN
+    // =========================================================
+
+    private bool TryGetRandomSpawnPosition(
+        out Vector3 spawnPosition
+    )
+    {
+        Bounds bounds =
+            spawnArea.bounds;
+
+
+        for (int attempt = 0;
+             attempt < maxSpawnAttempts;
+             attempt++)
+        {
+            // =================================================
+            // POSICIÓN ALEATORIA
+            // =================================================
+
+            float randomX =
+                Random.Range(
+                    bounds.min.x,
+                    bounds.max.x
+                );
+
+
+            float randomZ =
+                Random.Range(
+                    bounds.min.z,
+                    bounds.max.z
+                );
+
+
+            // =================================================
+            // ALTURA
+            // =================================================
+            //
+            // Siempre empezamos desde el suelo.
+            //
+            // No subimos Y buscando espacio.
+            //
+            // =================================================
+
+            float randomY =
+                bounds.max.y +
+                spawnHeight;
+
+
+            Vector3 candidate =
+                new Vector3(
+                    randomX,
+                    randomY,
+                    randomZ
+                );
+
+
+            // =================================================
+            // COMPROBAR SI ESTÁ LIBRE
+            // =================================================
+
+            bool occupied =
+                Physics.CheckBox(
+                    candidate,
+                    new Vector3(
+                        blockCheckRadius,
+                        blockCheckRadius,
+                        blockCheckRadius
+                    ),
+                    Quaternion.identity,
+                    ~0,
+                    QueryTriggerInteraction.Ignore
+                );
+
+
+            // =================================================
+            // POSICIÓN LIBRE
+            // =================================================
+
+            if (!occupied)
+            {
+                spawnPosition =
+                    candidate;
+
+                return true;
+            }
+        }
+
+
+        // =====================================================
+        // NO SE ENCONTRÓ POSICIÓN
+        // =====================================================
+
+        spawnPosition =
+            Vector3.zero;
+
+        return false;
     }
 }

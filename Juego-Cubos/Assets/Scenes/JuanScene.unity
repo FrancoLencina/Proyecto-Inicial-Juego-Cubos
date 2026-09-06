@@ -9701,8 +9701,12 @@ PrefabInstance:
       value: Ch09_nonPBR
       objectReference: {fileID: 0}
     - target: {fileID: 1073196923065172937, guid: 52e44a61ce184d4489ff24d453ef807e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1073196923065172937, guid: 52e44a61ce184d4489ff24d453ef807e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.934
+      value: 0.9
       objectReference: {fileID: 0}
     - target: {fileID: 1118399982647150364, guid: 52e44a61ce184d4489ff24d453ef807e, type: 3}
       propertyPath: m_LocalPosition.x
