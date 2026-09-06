@@ -78,59 +78,78 @@ public class LocalGameManager : MonoBehaviour
     // =========================================================
     // UPDATE
     // =========================================================
+private void Update()
+{
+   // -----------------------------------------------------
+// TEST: P = VICTORIA PLAYER 1
+// -----------------------------------------------------
 
-    private void Update()
+if (!gameCompleted &&
+    Keyboard.current != null &&
+    Keyboard.current.pKey.wasPressedThisFrame)
+{
+    Debug.Log(
+        "[LocalGameManager] TEST: Victoria Player 1."
+    );
+
+    winningPlayer = 1;
+
+    ShowVictory();
+}
+
+
+// -----------------------------------------------------
+// TEST: L = VICTORIA PLAYER 2
+// -----------------------------------------------------
+
+if (!gameCompleted &&
+    Keyboard.current != null &&
+    Keyboard.current.lKey.wasPressedThisFrame)
+{
+    Debug.Log(
+        "[LocalGameManager] TEST: Victoria Player 2."
+    );
+
+    winningPlayer = 2;
+
+    ShowVictory();
+}
+
+
+// -----------------------------------------------------
+// TEST: O = EMPATE
+// -----------------------------------------------------
+
+if (!gameCompleted &&
+    Keyboard.current != null &&
+    Keyboard.current.oKey.wasPressedThisFrame)
+{
+    Debug.Log(
+        "[LocalGameManager] TEST: Empate."
+    );
+
+    DrawGame();
+}
+
+    // -----------------------------------------------------
+    // ESPERAR ATERRIZAJE
+    // -----------------------------------------------------
+
+    if (waitingForPlayerToLand)
     {
-        // -----------------------------------------------------
-        // TEST: P = VICTORIA PLAYER 1
-        // -----------------------------------------------------
-
-        if (!gameCompleted &&
-            Keyboard.current != null &&
-            Keyboard.current.pKey.wasPressedThisFrame)
-        {
-            Debug.Log(
-                "[LocalGameManager] TEST: Victoria Player 1."
-            );
-
-            PlayerCompletedSequence(1);
-        }
-
-        // -----------------------------------------------------
-        // TEST: O = DERROTA
-        // -----------------------------------------------------
-
-        if (!gameCompleted &&
-            Keyboard.current != null &&
-            Keyboard.current.oKey.wasPressedThisFrame)
-        {
-            Debug.Log(
-                "[LocalGameManager] TEST: Derrota."
-            );
-
-            LoseGame();
-        }
-
-        // -----------------------------------------------------
-        // ESPERAR ATERRIZAJE
-        // -----------------------------------------------------
-
-        if (waitingForPlayerToLand)
-        {
-            CheckWinningPlayerLanding();
-            return;
-        }
-
-        // -----------------------------------------------------
-        // TIEMPO AGOTADO
-        // -----------------------------------------------------
-
-        if (!gameCompleted && didTimeRunOut)
-        {
-            LoseGame();
-        }
+        CheckWinningPlayerLanding();
+        return;
     }
 
+    // -----------------------------------------------------
+    // TIEMPO AGOTADO
+    // -----------------------------------------------------
+
+    if (!gameCompleted && didTimeRunOut)
+    {
+        DrawGame();
+    }
+}
     // =========================================================
     // FIND PLAYERS
     // =========================================================
@@ -383,30 +402,27 @@ public class LocalGameManager : MonoBehaviour
     // =========================================================
     // VICTORY
     // =========================================================
+private void ShowVictory()
+{
+    if (gameCompleted)
+        return;
 
-    private void ShowVictory()
-    {
-        if (gameCompleted)
-            return;
+    gameCompleted = true;
+    waitingForPlayerToLand = false;
 
-        gameCompleted = true;
-        waitingForPlayerToLand = false;
+    Debug.Log(
+        "[LocalGameManager] ¡GANÓ EL JUGADOR " +
+        winningPlayer
+    );
 
-        Debug.Log(
-            "[LocalGameManager] ¡PLAYER " +
-            winningPlayer +
-            " GANÓ!"
-        );
+    SetResultText(
+        "¡GANÓ EL JUGADOR " +
+        winningPlayer,
+        Color.green
+    );
 
-        SetResultText(
-            "¡PLAYER " +
-            winningPlayer +
-            " GANÓ!",
-            Color.green
-        );
-
-        ShowResultPanel();
-    }
+    ShowResultPanel();
+}
 
     // =========================================================
     // DEFEAT
@@ -461,24 +477,24 @@ public class LocalGameManager : MonoBehaviour
     // RESULT PANEL
     // =========================================================
 
-    private void ShowResultPanel()
+   private void ShowResultPanel()
+{
+    Time.timeScale = 0f;
+
+    if (victoryPanel != null)
     {
-        Time.timeScale = 0f;
-
-        if (victoryPanel != null)
-        {
-            victoryPanel.SetActive(true);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[LocalGameManager] Victory Panel no está asignado."
-            );
-        }
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        victoryPanel.SetActive(true);
     }
+    else
+    {
+        Debug.LogWarning(
+            "[LocalGameManager] Victory Panel no está asignado."
+        );
+    }
+
+    Cursor.lockState = CursorLockMode.None;
+    Cursor.visible = true;
+}
 
     // =========================================================
     // RETURN TO MAIN MENU
@@ -499,4 +515,29 @@ public class LocalGameManager : MonoBehaviour
             mainMenuSceneName
         );
     }
+
+    // =========================================================
+// DRAW / EMPATE
+// =========================================================
+
+private void DrawGame()
+{
+    if (gameCompleted)
+        return;
+
+    gameCompleted = true;
+
+    waitingForPlayerToLand = false;
+
+    Debug.Log(
+        "[LocalGameManager] ¡EMPATE!"
+    );
+
+    SetResultText(
+        "¡EMPATE! Se acabó el tiempo",
+        Color.yellow
+    );
+
+    ShowResultPanel();
+}
 }

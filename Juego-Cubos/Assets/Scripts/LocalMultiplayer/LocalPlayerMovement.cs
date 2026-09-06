@@ -12,7 +12,6 @@ public class LocalPlayerMovement : MonoBehaviour
     [Header("Player")]
     [SerializeField] private PlayerNumber playerNumber = PlayerNumber.Player1;
 
-    // Necesario para que LocalGameManager identifique a cada jugador.
     public PlayerNumber PlayerType => playerNumber;
 
     [Header("Movement")]
@@ -38,6 +37,12 @@ public class LocalPlayerMovement : MonoBehaviour
     [Header("Animation")]
     public Animator animator;
 
+    [Header("DEBUG")]
+    [SerializeField] private bool enableDebugLogs = true;
+
+    // Cada cuánto mostrar el estado físico.
+    [SerializeField] private float physicsLogInterval = 0.15f;
+
     private Rigidbody rb;
     private PlayerInteraction playerInteraction;
     private PlayerControls controls;
@@ -55,6 +60,23 @@ public class LocalPlayerMovement : MonoBehaviour
 
     private Vector3 wallNormal;
 
+    // =========================================================
+    // DEBUG VARIABLES
+    // =========================================================
+
+    private bool previousGrounded;
+    private bool previousJumping;
+
+    private float physicsLogTimer;
+
+    // Guardamos la velocidad anterior para detectar
+    // cambios extraños.
+    private float previousVelocityY;
+
+    // =========================================================
+    // AWAKE
+    // =========================================================
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -64,7 +86,28 @@ public class LocalPlayerMovement : MonoBehaviour
         controls = new PlayerControls();
 
         InputSettings.LoadBindings(controls);
+
+        DebugLog(
+            $"[INIT] Player={playerNumber} | " +
+            $"Position={transform.position} | " +
+            $"Rigidbody={rb != null}"
+        );
+
+        if (rb != null)
+        {
+            DebugLog(
+                $"[RIGIDBODY] " +
+                $"UseGravity={rb.useGravity} | " +
+                $"IsKinematic={rb.isKinematic} | " +
+                $"Mass={rb.mass} | " +
+                $"Constraints={rb.constraints}"
+            );
+        }
     }
+
+    // =========================================================
+    // ENABLE / DISABLE
+    // =========================================================
 
     private void OnEnable()
     {
@@ -78,9 +121,40 @@ public class LocalPlayerMovement : MonoBehaviour
             controls.Disable();
     }
 
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
     private void Update()
     {
         CheckGround();
+
+        // Detectar cambios de Grounded.
+        if (isGrounded != previousGrounded)
+        {
+            DebugLog(
+                $"[GROUND CHANGE] " +
+                $"{previousGrounded} -> {isGrounded} | " +
+                $"PositionY={transform.position.y:F3} | " +
+                $"VelocityY={rb.linearVelocity.y:F3} | " +
+                $"Jumping={isJumping}"
+            );
+
+            previousGrounded = isGrounded;
+        }
+
+        // Detectar cambios de Jumping.
+        if (isJumping != previousJumping)
+        {
+            DebugLog(
+                $"[JUMP STATE CHANGE] " +
+                $"{previousJumping} -> {isJumping} | " +
+                $"PositionY={transform.position.y:F3} | " +
+                $"VelocityY={rb.linearVelocity.y:F3}"
+            );
+
+            previousJumping = isJumping;
+        }
 
         if (animator != null)
             animator.SetBool("IsGrounded", isGrounded);
@@ -199,13 +273,11 @@ public class LocalPlayerMovement : MonoBehaviour
         {
             if (playerNumber == PlayerNumber.Player1)
             {
-                // Player 1 = Space
                 jumpPressed =
                     Keyboard.current.spaceKey.wasPressedThisFrame;
             }
             else
             {
-                // Player 2 = Numpad 0
                 jumpPressed =
                     Keyboard.current.numpad0Key.wasPressedThisFrame;
             }
@@ -213,6 +285,15 @@ public class LocalPlayerMovement : MonoBehaviour
 
         if (jumpPressed)
         {
+            DebugLog(
+                $"[JUMP START] " +
+                $"Grounded={isGrounded} | " +
+                $"Jumping={isJumping} | " +
+                $"PositionY={transform.position.y:F3} | " +
+                $"VelocityY BEFORE={rb.linearVelocity.y:F3} | " +
+                $"JumpForce={jumpForce}"
+            );
+
             rb.AddForce(
                 Vector3.up * jumpForce,
                 ForceMode.Impulse
@@ -225,6 +306,11 @@ public class LocalPlayerMovement : MonoBehaviour
 
             if (animator != null)
                 animator.SetTrigger("Jump");
+
+            DebugLog(
+                $"[JUMP FORCE APPLIED] " +
+                $"VelocityY AFTER={rb.linearVelocity.y:F3}"
+            );
         }
     }
 
@@ -237,14 +323,85 @@ public class LocalPlayerMovement : MonoBehaviour
         if (rb == null)
             return;
 
+        // =====================================================
+        // DEBUG - ANTES DE MODIFICAR EL RIGIDBODY
+        // =====================================================
+
         Vector3 velocity = rb.linearVelocity;
+
+        float velocityYBeforeMovement = velocity.y;
+
+        physicsLogTimer += Time.fixedDeltaTime;
+
+        if (enableDebugLogs &&
+            physicsLogTimer >= physicsLogInterval)
+        {
+            physicsLogTimer = 0f;
+
+            DebugLog(
+                $"[Y DEBUG BEFORE] " +
+                $"Grounded={isGrounded} | " +
+                $"Jumping={isJumping} | " +
+                $"PosY={transform.position.y:F3} | " +
+                $"VelocityY={velocity.y:F3} | " +
+                $"PreviousVelocityY={previousVelocityY:F3} | " +
+                $"InputY={verticalInput:F1}"
+            );
+
+            // =================================================
+            // ALERTA 1
+            // =================================================
+
+            if (!isGrounded &&
+                !isJumping &&
+                velocity.y > 0.1f)
+            {
+                DebugLog(
+                    $"[!!! ALERTA VERTICAL !!!] " +
+                    $"El jugador NO está grounded, " +
+                    $"NO está jumping, pero VelocityY es positiva: " +
+                    $"{velocity.y:F3}"
+                );
+            }
+
+            // =================================================
+            // ALERTA 2
+            // =================================================
+
+            if (!isGrounded &&
+                Mathf.Abs(velocity.y) < 0.01f)
+            {
+                DebugLog(
+                    "[!!! ALERTA !!!] " +
+                    "El jugador está en el aire pero VelocityY es prácticamente 0."
+                );
+            }
+
+            // =================================================
+            // ALERTA 3
+            // =================================================
+
+            if (Mathf.Abs(velocity.y - previousVelocityY) > 3f)
+            {
+                DebugLog(
+                    $"[!!! CAMBIO VELOCIDAD !!!] " +
+                    $"VelocityY cambió de " +
+                    $"{previousVelocityY:F3} a {velocity.y:F3}"
+                );
+            }
+
+            previousVelocityY = velocity.y;
+        }
+
+        // =====================================================
+        // MOVEMENT
+        // =====================================================
 
         float currentSpeed =
             isSprinting
                 ? speed * sprintMultiplier
                 : speed;
 
-        // El personaje siempre avanza según SU forward.
         Vector3 forward = transform.forward;
 
         Vector3 desiredVelocity =
@@ -256,8 +413,10 @@ public class LocalPlayerMovement : MonoBehaviour
             desiredVelocity *
             Time.fixedDeltaTime;
 
-        // Si está agarrando un bloque, respetar las
-        // restricciones de movimiento de PlayerInteraction.
+        // =====================================================
+        // PLAYER INTERACTION
+        // =====================================================
+
         if (playerInteraction != null &&
             playerInteraction.IsHoldingBlock)
         {
@@ -296,13 +455,58 @@ public class LocalPlayerMovement : MonoBehaviour
             }
         }
 
+        // Guardamos X/Z.
         velocity.x = desiredVelocity.x;
         velocity.z = desiredVelocity.z;
 
+        // =====================================================
+        // RESET Y
+        // =====================================================
+
         if (isGrounded && !isJumping)
+        {
+            if (Mathf.Abs(velocity.y) > 0.01f)
+            {
+                DebugLog(
+                    $"[RESET Y] " +
+                    $"Grounded={isGrounded} | " +
+                    $"Jumping={isJumping} | " +
+                    $"VelocityY BEFORE RESET={velocity.y:F3}"
+                );
+            }
+
             velocity.y = 0f;
+        }
+
+        // =====================================================
+        // ASIGNAR VELOCIDAD
+        // =====================================================
 
         rb.linearVelocity = velocity;
+
+        // =====================================================
+        // DEBUG - DESPUÉS DE MODIFICAR EL RIGIDBODY
+        // =====================================================
+
+        if (enableDebugLogs)
+        {
+            float velocityYAfterMovement =
+                rb.linearVelocity.y;
+
+            if (Mathf.Abs(
+                    velocityYAfterMovement -
+                    velocityYBeforeMovement
+                ) > 0.01f)
+            {
+                DebugLog(
+                    $"[Y DEBUG AFTER] " +
+                    $"VelocityY BEFORE={velocityYBeforeMovement:F3} | " +
+                    $"VelocityY AFTER={velocityYAfterMovement:F3} | " +
+                    $"Grounded={isGrounded} | " +
+                    $"Jumping={isJumping}"
+                );
+            }
+        }
 
         // =====================================================
         // ROTATION
@@ -323,8 +527,6 @@ public class LocalPlayerMovement : MonoBehaviour
                     0f
                 );
 
-            // Si está agarrando un bloque, comprobar
-            // cuánto puede rotar sin atravesarlo.
             if (playerInteraction != null &&
                 playerInteraction.IsHoldingBlock)
             {
@@ -386,6 +588,12 @@ public class LocalPlayerMovement : MonoBehaviour
             {
                 if (jumpTime < maxJumpTime)
                 {
+                    DebugLog(
+                        $"[JUMP HOLD] " +
+                        $"Time={jumpTime:F3}/{maxJumpTime:F3} | " +
+                        $"VelocityY BEFORE={rb.linearVelocity.y:F3}"
+                    );
+
                     rb.AddForce(
                         Vector3.up *
                         jumpHoldForce,
@@ -394,14 +602,27 @@ public class LocalPlayerMovement : MonoBehaviour
 
                     jumpTime +=
                         Time.fixedDeltaTime;
+
+                    DebugLog(
+                        $"[JUMP HOLD] " +
+                        $"VelocityY AFTER={rb.linearVelocity.y:F3}"
+                    );
                 }
                 else
                 {
+                    DebugLog(
+                        "[JUMP END] MaxJumpTime alcanzado."
+                    );
+
                     isJumping = false;
                 }
             }
             else
             {
+                DebugLog(
+                    "[JUMP END] Botón de salto soltado."
+                );
+
                 isJumping = false;
             }
         }
@@ -433,10 +654,46 @@ public class LocalPlayerMovement : MonoBehaviour
                 QueryTriggerInteraction.Ignore
             );
 
-        if (detected && hit.normal.y > 0.5f)
-            isGrounded = true;
-        else
-            isGrounded = false;
+        bool newGrounded =
+            detected &&
+            hit.normal.y > 0.5f;
+
+        // =====================================================
+        // GROUND HIT
+        // =====================================================
+
+        if (detected)
+        {
+            DebugLog(
+                $"[GROUND HIT] " +
+                $"Collider={hit.collider.name} | " +
+                $"Object={hit.collider.gameObject.name} | " +
+                $"Layer={LayerMask.LayerToName(hit.collider.gameObject.layer)} | " +
+                $"HitPoint={hit.point} | " +
+                $"Normal={hit.normal} | " +
+                $"NormalY={hit.normal.y:F3} | " +
+                $"Distance={hit.distance:F3} | " +
+                $"PlayerY={transform.position.y:F3}"
+            );
+        }
+
+        // =====================================================
+        // GROUND CHECK SOSPECHOSO
+        // =====================================================
+
+        if (newGrounded &&
+            rb != null &&
+            Mathf.Abs(rb.linearVelocity.y) > 0.5f)
+        {
+            DebugLog(
+                $"[!!! GROUND CHECK SOSPECHOSO !!!] " +
+                $"Grounded=TRUE mientras VelocityY=" +
+                $"{rb.linearVelocity.y:F3} | " +
+                $"Collider={hit.collider.name}"
+            );
+        }
+
+        isGrounded = newGrounded;
     }
 
     // =========================================================
@@ -445,7 +702,7 @@ public class LocalPlayerMovement : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        // Ignorar bloques que estamos agarrando.
+        // Ignorar bloques agarrados.
         if (collision.gameObject.layer ==
             LayerMask.NameToLayer("HeldFruitBlock"))
             return;
@@ -464,6 +721,12 @@ public class LocalPlayerMovement : MonoBehaviour
             if (normal.y < 0.5f)
             {
                 wallNormal = normal;
+
+                DebugLog(
+                    $"[WALL] " +
+                    $"Object={collision.gameObject.name} | " +
+                    $"Normal={normal}"
+                );
             }
         }
     }
@@ -517,6 +780,21 @@ public class LocalPlayerMovement : MonoBehaviour
         Gizmos.DrawLine(
             origin,
             end
+        );
+    }
+
+    // =========================================================
+    // DEBUG LOG
+    // =========================================================
+
+    private void DebugLog(string message)
+    {
+        if (!enableDebugLogs)
+            return;
+
+        Debug.Log(
+            $"[LocalPlayerMovement - {playerNumber}] {message}",
+            this
         );
     }
 }

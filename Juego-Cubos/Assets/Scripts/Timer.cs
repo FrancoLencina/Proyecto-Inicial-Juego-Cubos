@@ -1,48 +1,167 @@
 using UnityEngine;
-using System.Collections;
 using TMPro;
-using UnityEngine.SceneManagement;
 
-public class Timer: MonoBehaviour {
-   
-   [SerializeField] private GameManager gameManager;
-   [SerializeField] private float targetTime;
-   [SerializeField] private float timeRemaining;
-   private bool isCountingDown = false;
-   [SerializeField] private TMP_Text textTimer;
+public class Timer : MonoBehaviour
+{
+    [Header("Game Managers")]
 
-   void Start()
+    [SerializeField]
+    private GameManager gameManager;
+
+    [SerializeField]
+    private LocalGameManager localGameManager;
+
+
+    [Header("Timer")]
+
+    [SerializeField]
+    private float targetTime = 60f;
+
+    [SerializeField]
+    private float timeRemaining;
+
+    private bool isCountingDown = false;
+
+
+    [Header("UI")]
+
+    [SerializeField]
+    private TMP_Text textTimer;
+
+
+    // =====================================================
+    // START
+    // =====================================================
+
+    private void Start()
     {
-      isCountingDown = true;
-      timeRemaining = targetTime;
+        timeRemaining = targetTime;
+
+        isCountingDown = true;
+
+        UpdateTimerDisplay(timeRemaining);
     }
-   void Update()
+
+
+    // =====================================================
+    // UPDATE
+    // =====================================================
+
+    private void Update()
     {
-        if (isCountingDown && timeRemaining > 0) {
-            timeRemaining -= Time.deltaTime;
+        if (!isCountingDown)
+            return;
 
-            if (timeRemaining < 0)
-               timeRemaining = 0.0f;
+        if (timeRemaining <= 0f)
+            return;
 
-               UpdateTimerDisplay(timeRemaining);
 
-            if (timeRemaining == 0) {
-               timerStop();
-            }
+        timeRemaining -= Time.deltaTime;
+
+
+        if (timeRemaining <= 0f)
+        {
+            timeRemaining = 0f;
+
+            UpdateTimerDisplay(timeRemaining);
+
+            TimerStop();
+
+            return;
         }
+
+
+        UpdateTimerDisplay(timeRemaining);
     }
 
-    void UpdateTimerDisplay(float timeToDisplay)
+
+    // =====================================================
+    // DISPLAY
+    // =====================================================
+
+    private void UpdateTimerDisplay(
+        float timeToDisplay
+    )
     {
-         // Pasamos float a INT para que entre en formato MM//SS
-        float minutes = Mathf.FloorToInt(timeToDisplay / 60);
-        float seconds = Mathf.FloorToInt(timeToDisplay % 60);
+        if (textTimer == null)
+            return;
 
-        textTimer.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+
+        int minutes =
+            Mathf.FloorToInt(
+                timeToDisplay / 60f
+            );
+
+        int seconds =
+            Mathf.FloorToInt(
+                timeToDisplay % 60f
+            );
+
+
+        textTimer.text =
+            string.Format(
+                "{0:00}:{1:00}",
+                minutes,
+                seconds
+            );
     }
 
-   public void timerStop() {
-      isCountingDown = false;
-      gameManager.timeRanOut();
+
+    // =====================================================
+    // STOP
+    // =====================================================
+
+    public void TimerStop()
+    {
+        if (!isCountingDown)
+            return;
+
+
+        isCountingDown = false;
+
+
+        Debug.Log(
+            "[Timer] Tiempo terminado."
+        );
+
+
+        // =============================================
+        // SINGLEPLAYER
+        // =============================================
+
+        if (gameManager != null)
+        {
+            gameManager.timeRanOut();
+
+            return;
+        }
+
+
+        // =============================================
+        // LOCAL MULTIPLAYER
+        // =============================================
+
+        if (localGameManager != null)
+        {
+            localGameManager.TimeRanOut();
+
+            return;
+        }
+
+
+        Debug.LogWarning(
+            "[Timer] No hay ningún GameManager asignado."
+        );
     }
+
+
+    // =====================================================
+    // PROPIEDADES
+    // =====================================================
+
+    public float TimeRemaining =>
+        timeRemaining;
+
+    public bool IsCountingDown =>
+        isCountingDown;
 }
