@@ -190,23 +190,15 @@ public class NetworkTargetZone : MonoBehaviour
         {
             sequenceCompleted = true;
 
-            Debug.Log(
-                "[NetworkTargetZone] " +
-                "SECUENCIA COMPLETADA | " +
-                "Zona: " +
-                (isHostZone
-                    ? "HOST"
-                    : "CLIENTE")
-            );
-
             ulong playerId =
                 GetZonePlayerId();
 
             if (playerId != ulong.MaxValue)
             {
-                gameManager.PlayerCompleted(
-                    playerId
-                );
+                if (isHostZone)
+                gameManager.PlayerCompleted(playerId, true);
+                else
+                gameManager.PlayerCompleted(playerId, false);
             }
         }
     }
@@ -360,14 +352,14 @@ public class NetworkTargetZone : MonoBehaviour
             ulong playerId =
                 networkBlock.HolderClientId;
 
-            bool belongsToZone =
+/*             bool belongsToZone =
                 IsBlockFromCorrectPlayer(
                     playerId
                 );
 
             if (!belongsToZone)
                 continue;
-
+ */
             if (
                 !fruitBlocksInside.Contains(
                     networkBlock
@@ -439,14 +431,14 @@ public class NetworkTargetZone : MonoBehaviour
         ulong playerId =
             networkBlock.HolderClientId;
 
-        if (
+/*         if (
             !IsBlockFromCorrectPlayer(
                 playerId
             )
         )
         {
             return;
-        }
+        } */
 
         if (
             !fruitBlocksInside.Contains(
@@ -544,15 +536,9 @@ public class NetworkTargetZone : MonoBehaviour
             return NetworkManager.ServerClientId;
         }
 
-        foreach (
-            ulong clientId
-            in NetworkManager.Singleton.ConnectedClientsIds
-        )
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            if (
-                clientId !=
-                NetworkManager.ServerClientId
-            )
+            if (clientId != NetworkManager.ServerClientId)
             {
                 return clientId;
             }
@@ -565,9 +551,7 @@ public class NetworkTargetZone : MonoBehaviour
     // VALIDAR DUEÑO
     // =====================================================
 
-    private bool IsBlockFromCorrectPlayer(
-        ulong playerId
-    )
+    private bool IsBlockFromCorrectPlayer(ulong playerId)
     {
         if (
             NetworkManager.Singleton == null
@@ -576,17 +560,14 @@ public class NetworkTargetZone : MonoBehaviour
             return false;
         }
 
-        ulong hostClientId =
-            NetworkManager.ServerClientId;
+        ulong hostClientId = NetworkManager.ServerClientId;
 
         if (isHostZone)
         {
-            return playerId ==
-                   hostClientId;
+            return playerId == hostClientId;
         }
 
-        return playerId !=
-               hostClientId;
+        return playerId != hostClientId;
     }
 
     // =====================================================
@@ -595,12 +576,7 @@ public class NetworkTargetZone : MonoBehaviour
 
     private void CleanInvalidBlocks()
     {
-        for (
-            int i =
-                fruitBlocksInside.Count - 1;
-            i >= 0;
-            i--
-        )
+        for (int i = fruitBlocksInside.Count - 1; i >= 0; i--)
         {
             NetworkFruitBlock networkBlock =
                 fruitBlocksInside[i];
@@ -673,14 +649,14 @@ public class NetworkTargetZone : MonoBehaviour
             ulong ownerId =
                 blockOwners[block];
 
-            if (
+  /*           if (
                 !IsBlockFromCorrectPlayer(
                     ownerId
                 )
             )
             {
                 break;
-            }
+            } */
 
             if (
                 ((1 << block.gameObject.layer) &

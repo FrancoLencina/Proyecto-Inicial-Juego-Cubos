@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 public class NetworkGameManager : NetworkBehaviour
 {
@@ -9,6 +11,10 @@ public class NetworkGameManager : NetworkBehaviour
     [SerializeField] private List<FruitData> availableFruits;
 
     [SerializeField] private int sequenceLength = 5;
+
+    [Header("Result")]
+    [SerializeField] private GameObject victoryPanel;
+    [SerializeField] private TMP_Text resultText;
 
     private List<FruitData> targetSequence;
 
@@ -37,6 +43,10 @@ public class NetworkGameManager : NetworkBehaviour
     {
         networkSequence =
             new NetworkList<int>();
+
+            
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
     }
 
     // =====================================================
@@ -333,9 +343,7 @@ public class NetworkGameManager : NetworkBehaviour
     // FINALIZAR PARTIDA
     // =====================================================
 
-    public void PlayerCompleted(
-        ulong clientId
-    )
+    public void PlayerCompleted(ulong clientId, bool didHostWin)
     {
         if (!IsServer)
             return;
@@ -354,9 +362,20 @@ public class NetworkGameManager : NetworkBehaviour
             clientId
         );
 
-        GameFinishedClientRpc(
-            clientId
-        );
+        GameFinishedClientRpc(clientId, didHostWin);
+    }
+
+
+    // ====================================================
+    // TERMINAR PARTIDA POR EMPATE
+    // ====================================================
+
+    public void TimeRanOut(){
+
+        gameFinished = true;
+
+        SetResultText("empate...", Color.black);
+        ShowResultPanel();
     }
 
     // =====================================================
@@ -364,9 +383,7 @@ public class NetworkGameManager : NetworkBehaviour
     // =====================================================
 
     [ClientRpc]
-    private void GameFinishedClientRpc(
-        ulong winningClientId
-    )
+    private void GameFinishedClientRpc(ulong winningClientId, bool didHostWin)
     {
         if (
             NetworkManager.Singleton == null
@@ -378,10 +395,7 @@ public class NetworkGameManager : NetworkBehaviour
         ulong localClientId =
             NetworkManager.Singleton.LocalClientId;
 
-        if (
-            localClientId ==
-            winningClientId
-        )
+        if (didHostWin)
         {
             Debug.Log(
                 "[NetworkGameManager] " +
@@ -412,15 +426,8 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local ganó la partida."
         );
 
-        /*
-         * Acá posteriormente:
-         *
-         * - Pantalla de victoria
-         * - Texto GANASTE
-         * - Animación
-         * - Sonido
-         * - Botón volver a jugar
-         */
+        SetResultText("Jugador 1 ha ganado!", Color.green);
+        ShowResultPanel();
     }
 
     private void OnLocalPlayerLost()
@@ -430,14 +437,74 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local perdió la partida."
         );
 
-        /*
-         * Acá posteriormente:
-         *
-         * - Pantalla de derrota
-         * - Texto PERDISTE
-         * - Animación
-         * - Sonido
-         * - Botón volver a jugar
-         */
+        SetResultText("Jugador 2 ha ganado!", Color.green);
+        ShowResultPanel();
+    }
+
+    // ======================
+    // PANEL DE RESULTADOS
+    // ======================
+
+      private void ShowResultPanel()
+    {
+        // Detener gameplay
+        //Time.timeScale = 0f;
+
+
+        // Mostrar panel
+        if (victoryPanel != null)
+        {
+            victoryPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[GameManager] Victory Panel no está asignado."
+            );
+        }
+
+        // Mostrar y liberar mouse
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+        private void SetResultText(
+        string text,
+        Color color
+    )
+    {
+        if (resultText == null)
+        {
+            Debug.LogWarning(
+                "[GameManager] ResultText no está asignado."
+            );
+
+            return;
+        }
+
+        resultText.text = text;
+        resultText.color = color;
+
+        // Mantener las características visuales
+        resultText.fontSize = 40f;
+        resultText.fontStyle = FontStyles.Bold;
+    }
+
+        public void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+
+        // Apagar Network Manager
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+
+        if (NetworkManager.Singleton.gameObject != null)
+            {
+                Destroy(NetworkManager.Singleton.gameObject);
+            }
+        }
+
+        SceneManager.LoadScene("MainMenuScene");
     }
 }
