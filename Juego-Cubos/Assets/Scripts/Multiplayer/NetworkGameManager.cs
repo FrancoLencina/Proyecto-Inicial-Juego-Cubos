@@ -412,15 +412,7 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local ganó la partida."
         );
 
-        /*
-         * Acá posteriormente:
-         *
-         * - Pantalla de victoria
-         * - Texto GANASTE
-         * - Animación
-         * - Sonido
-         * - Botón volver a jugar
-         */
+        SoundManager.Instance.PlayWin();
     }
 
     private void OnLocalPlayerLost()
@@ -430,14 +422,6 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local perdió la partida."
         );
 
-        /*
-         * Acá posteriormente:
-         *
-         * - Pantalla de derrota
-         * - Texto PERDISTE
-         * - Animación
-         * - Sonido
-         * - Botón volver a jugar
-         */
+        SoundManager.Instance.PlayLose();
     }
 }

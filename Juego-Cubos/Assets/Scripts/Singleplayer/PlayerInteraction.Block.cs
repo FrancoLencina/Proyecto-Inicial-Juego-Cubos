@@ -249,6 +249,8 @@ public partial class PlayerInteraction
             heldRigidbody.rotation =
                 holdPoint.rotation;
         }
+
+        SoundManager.Instance.PlayGrabBlock();
     }
 
 
@@ -289,5 +291,7 @@ public partial class PlayerInteraction
 
         heldCollider =
             null;
+
+            SoundManager.Instance.PlayDropBlock();
     }
 }

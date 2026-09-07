@@ -1,0 +1,26 @@
+fileFormatVersion: 2
+guid: a619cd5841d387e42a415883a63a4486
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - sfxSource: {instanceID: 0}
+  - musicSource: {instanceID: 0}
+  - footstepSound: {instanceID: 0}
+  - jumpSound: {instanceID: 0}
+  - landSound: {instanceID: 0}
+  - buttonClickSound: {instanceID: 0}
+  - pauseOpenSound: {instanceID: 0}
+  - pauseCloseSound: {instanceID: 0}
+  - grabBlockSound: {instanceID: 0}
+  - dropBlockSound: {instanceID: 0}
+  - correctPlacementSound: {instanceID: 0}
+  - winSound: {instanceID: 0}
+  - loseSound: {instanceID: 0}
+  - menuMusic: {fileID: 8300000, guid: 970c2521dc378b943bd1bcb8ca245dda, type: 3}
+  - gameplayMusic: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

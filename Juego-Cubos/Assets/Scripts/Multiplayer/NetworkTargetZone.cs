@@ -33,6 +33,8 @@ public class NetworkTargetZone : MonoBehaviour
 
     private int currentProgress = 0;
 
+    private int lastSoundProgress = 0;
+
     private bool sequenceCompleted;
 
     // =====================================================
@@ -218,11 +220,11 @@ public class NetworkTargetZone : MonoBehaviour
     private void UpdateLocalProgressUI()
     {
         /*
-         * El cliente hace su propia detección local.
-         *
-         * Esto solamente sirve para mostrar el progreso
-         * visualmente. No determina quién gana.
-         */
+        * El cliente hace su propia detección local.
+        *
+        * Esto solamente sirve para mostrar el progreso
+        * visualmente. No determina quién gana.
+        */
 
         CleanInvalidBlocks();
 
@@ -230,6 +232,24 @@ public class NetworkTargetZone : MonoBehaviour
 
         int localProgress =
             GetCorrectProgress();
+
+
+        // =====================================================
+        // SONIDO DE BLOQUE CORRECTO
+        // =====================================================
+
+        if (localProgress > lastSoundProgress)
+        {
+            SoundManager.Instance.PlayCorrectPlacement();
+        }
+
+        lastSoundProgress =
+            localProgress;
+
+
+        // =====================================================
+        // ACTUALIZAR PROGRESO
+        // =====================================================
 
         if (localProgress != currentProgress)
         {
