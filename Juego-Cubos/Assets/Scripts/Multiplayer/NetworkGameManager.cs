@@ -426,6 +426,8 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local ganó la partida."
         );
 
+        SoundManager.Instance.PlayWin();
+
         SetResultText("Jugador 1 ha ganado!", Color.green);
         ShowResultPanel();
     }
@@ -437,8 +439,12 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local perdió la partida."
         );
 
+        SoundManager.Instance.PlayLose();
+
         SetResultText("Jugador 2 ha ganado!", Color.green);
         ShowResultPanel();
+
+
     }
 
     // ======================
