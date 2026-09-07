@@ -12,6 +12,10 @@ public class NetworkGameManager : NetworkBehaviour
 
     [SerializeField] private int sequenceLength = 5;
 
+    [Header("Victory Check")]
+    [Tooltip("Tiempo que se espera después de completar la pila antes de confirmar la victoria.")]
+    [SerializeField] private float victoryCheckDelay = 1f;
+
     [Header("Result")]
     [SerializeField] private GameObject victoryPanel;
     [SerializeField] private TMP_Text resultText;
@@ -26,6 +30,10 @@ public class NetworkGameManager : NetworkBehaviour
 
     private Coroutine sequenceUICoroutine;
 
+    private Coroutine victoryCoroutine;
+
+    private bool checkingVictory;
+
     public IReadOnlyList<FruitData> TargetSequence =>
         targetSequence;
 
@@ -34,6 +42,7 @@ public class NetworkGameManager : NetworkBehaviour
 
     public ulong WinnerClientId =>
         winnerClientId;
+
 
     // =====================================================
     // AWAKE
@@ -44,10 +53,10 @@ public class NetworkGameManager : NetworkBehaviour
         networkSequence =
             new NetworkList<int>();
 
-            
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
     }
+
 
     // =====================================================
     // NETWORK SPAWN
@@ -75,6 +84,7 @@ public class NetworkGameManager : NetworkBehaviour
         }
     }
 
+
     // =====================================================
     // NETWORK DESPAWN
     // =====================================================
@@ -86,13 +96,17 @@ public class NetworkGameManager : NetworkBehaviour
 
         if (sequenceUICoroutine != null)
         {
-            StopCoroutine(
-                sequenceUICoroutine
-            );
-
+            StopCoroutine(sequenceUICoroutine);
             sequenceUICoroutine = null;
         }
+
+        if (victoryCoroutine != null)
+        {
+            StopCoroutine(victoryCoroutine);
+            victoryCoroutine = null;
+        }
     }
+
 
     // =====================================================
     // GENERAR SECUENCIA
@@ -167,6 +181,7 @@ public class NetworkGameManager : NetworkBehaviour
         UpdateLocalSequence();
     }
 
+
     // =====================================================
     // SECUENCIA RECIBIDA
     // =====================================================
@@ -184,6 +199,7 @@ public class NetworkGameManager : NetworkBehaviour
 
         UpdateLocalSequence();
     }
+
 
     // =====================================================
     // ACTUALIZAR SECUENCIA LOCAL
@@ -240,15 +256,9 @@ public class NetworkGameManager : NetworkBehaviour
             targetSequence.Count
         );
 
-        /*
-         * La UI es completamente local.
-         *
-         * Cada jugador muestra la secuencia que recibió
-         * en su propio HUD.
-         */
-
         UpdateLocalSequenceUI();
     }
+
 
     // =====================================================
     // ACTUALIZAR HUD LOCAL
@@ -280,18 +290,13 @@ public class NetworkGameManager : NetworkBehaviour
             );
     }
 
+
     // =====================================================
     // BUSCAR SEQUENCE UI
     // =====================================================
 
     private IEnumerator FindAndDisplaySequenceUI()
     {
-        /*
-         * Esperamos algunos frames porque el HUD puede
-         * crearse después de que NetworkGameManager
-         * reciba la NetworkList.
-         */
-
         SequenceUI sequenceUI = null;
 
         for (
@@ -325,10 +330,6 @@ public class NetworkGameManager : NetworkBehaviour
             targetSequence.ToArray()
         );
 
-        /*
-         * El primer objetivo siempre es el índice 0.
-         */
-
         sequenceUI.SetCurrentTarget(0);
 
         Debug.Log(
@@ -339,11 +340,218 @@ public class NetworkGameManager : NetworkBehaviour
         sequenceUICoroutine = null;
     }
 
+
+    // =====================================================
+    // JUGADOR COMPLETÓ LA SECUENCIA
+    // =====================================================
+
+    public void PlayerCompleted(
+        ulong clientId
+    )
+    {
+        if (!IsServer)
+            return;
+
+        if (gameFinished)
+            return;
+
+        /*
+         * Si ya estamos comprobando una victoria,
+         * no iniciar otra coroutine.
+         */
+        if (checkingVictory)
+            return;
+
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "Jugador " +
+            clientId +
+            " completó la pila."
+        );
+
+        checkingVictory = true;
+
+        victoryCoroutine =
+            StartCoroutine(
+                CheckVictoryAfterDelay(
+                    clientId
+                )
+            );
+    }
+
+
+    // =====================================================
+    // ESPERAR Y VOLVER A COMPROBAR
+    // =====================================================
+
+    private IEnumerator CheckVictoryAfterDelay(
+        ulong completingClientId
+    )
+    {
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "Esperando " +
+            victoryCheckDelay +
+            " segundos antes de confirmar la victoria..."
+        );
+
+        yield return new WaitForSeconds(
+            victoryCheckDelay
+        );
+
+        if (gameFinished)
+        {
+            checkingVictory = false;
+            victoryCoroutine = null;
+            yield break;
+        }
+
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "Revisando nuevamente las pilas..."
+        );
+
+       NetworkTargetZone[] zones =
+    FindObjectsByType<NetworkTargetZone>();
+        NetworkTargetZone hostZone = null;
+        NetworkTargetZone clientZone = null;
+
+        foreach (
+            NetworkTargetZone zone in zones
+        )
+        {
+            if (zone == null)
+                continue;
+
+            if (zone.IsHostZone)
+                hostZone = zone;
+            else
+                clientZone = zone;
+        }
+
+        bool hostComplete =
+            hostZone != null &&
+            hostZone.IsStackComplete();
+
+        bool clientComplete =
+            clientZone != null &&
+            clientZone.IsStackComplete();
+
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "Resultado de la segunda comprobación | " +
+            "Host: " +
+            hostComplete +
+            " | Cliente: " +
+            clientComplete
+        );
+
+        /*
+         * =================================================
+         * CASO 1: AMBOS COMPLETARON
+         * =================================================
+         */
+
+        if (
+            hostComplete &&
+            clientComplete
+        )
+        {
+            checkingVictory = false;
+            victoryCoroutine = null;
+
+            Debug.Log(
+                "[NetworkGameManager] " +
+                "AMBOS JUGADORES COMPLETARON LA PILA. EMPATE."
+            );
+
+            DrawGame();
+
+            yield break;
+        }
+
+        /*
+         * =================================================
+         * CASO 2: EL JUGADOR QUE COMPLETÓ SIGUE COMPLETO
+         * =================================================
+         */
+
+        bool completingPlayerStillComplete =
+            false;
+
+        if (
+            completingClientId ==
+            NetworkManager.ServerClientId
+        )
+        {
+            completingPlayerStillComplete =
+                hostComplete;
+        }
+        else
+        {
+            completingPlayerStillComplete =
+                clientComplete;
+        }
+
+        if (completingPlayerStillComplete)
+        {
+            checkingVictory = false;
+            victoryCoroutine = null;
+
+            Debug.Log(
+                "[NetworkGameManager] " +
+                "La pila sigue completa. " +
+                "Jugador ganador: " +
+                completingClientId
+            );
+
+            FinishGame(
+                completingClientId
+            );
+
+            yield break;
+        }
+
+        /*
+         * =================================================
+         * CASO 3: LA PILA SE DESARMÓ
+         * =================================================
+         */
+
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "La pila se desarmó durante la espera. " +
+            "La partida continúa."
+        );
+
+        if (
+            hostZone != null &&
+            !hostComplete
+        )
+        {
+            hostZone.ResetCompletionState();
+        }
+
+        if (
+            clientZone != null &&
+            !clientComplete
+        )
+        {
+            clientZone.ResetCompletionState();
+        }
+
+        checkingVictory = false;
+        victoryCoroutine = null;
+    }
+
+
     // =====================================================
     // FINALIZAR PARTIDA
     // =====================================================
 
-    public void PlayerCompleted(ulong clientId, bool didHostWin)
+    private void FinishGame(
+        ulong winningClientId
+    )
     {
         if (!IsServer)
             return;
@@ -354,36 +562,60 @@ public class NetworkGameManager : NetworkBehaviour
         gameFinished = true;
 
         winnerClientId =
-            clientId;
+            winningClientId;
 
         Debug.Log(
             "[NetworkGameManager] " +
-            "JUGADOR GANADOR: " +
-            clientId
+            "PARTIDA FINALIZADA | Ganador ClientId: " +
+            winningClientId
         );
 
-        GameFinishedClientRpc(clientId, didHostWin);
+        GameFinishedClientRpc(
+            winningClientId
+        );
     }
 
 
-    // ====================================================
+    // =====================================================
     // TERMINAR PARTIDA POR EMPATE
-    // ====================================================
+    // =====================================================
 
-    public void TimeRanOut(){
+    public void TimeRanOut()
+    {
+        if (!IsServer)
+            return;
+
+        if (gameFinished)
+            return;
+
+        DrawGame();
+    }
+
+
+    private void DrawGame()
+    {
+        if (gameFinished)
+            return;
 
         gameFinished = true;
 
-        SetResultText("empate...", Color.black);
-        ShowResultPanel();
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "PARTIDA FINALIZADA | EMPATE"
+        );
+
+        DrawGameClientRpc();
     }
 
+
     // =====================================================
-    // COMUNICAR RESULTADO
+    // COMUNICAR VICTORIA
     // =====================================================
 
     [ClientRpc]
-    private void GameFinishedClientRpc(ulong winningClientId, bool didHostWin)
+    private void GameFinishedClientRpc(
+        ulong winningClientId
+    )
     {
         if (
             NetworkManager.Singleton == null
@@ -395,7 +627,11 @@ public class NetworkGameManager : NetworkBehaviour
         ulong localClientId =
             NetworkManager.Singleton.LocalClientId;
 
-        if (didHostWin)
+        bool localPlayerWon =
+            localClientId ==
+            winningClientId;
+
+        if (localPlayerWon)
         {
             Debug.Log(
                 "[NetworkGameManager] " +
@@ -415,8 +651,25 @@ public class NetworkGameManager : NetworkBehaviour
         }
     }
 
+
     // =====================================================
-    // RESULTADO LOCAL
+    // COMUNICAR EMPATE
+    // =====================================================
+
+    [ClientRpc]
+    private void DrawGameClientRpc()
+    {
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "RESULTADO LOCAL: EMPATE"
+        );
+
+        OnLocalPlayerDraw();
+    }
+
+
+    // =====================================================
+    // RESULTADO LOCAL - GANADOR
     // =====================================================
 
     private void OnLocalPlayerWon()
@@ -426,11 +679,27 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local ganó la partida."
         );
 
-        SoundManager.Instance.PlayWin();
+        if (
+            SoundManager.Instance != null
+        )
+        {
+            SoundManager.Instance.PlayWin();
+        }
 
-        SetResultText("Jugador 1 ha ganado!", Color.green);
+        SetResultText(
+            "¡GANASTE!",
+            Color.green
+        );
+
+        FreezeLocalPlayer();
+
         ShowResultPanel();
     }
+
+
+    // =====================================================
+    // RESULTADO LOCAL - PERDEDOR
+    // =====================================================
 
     private void OnLocalPlayerLost()
     {
@@ -439,25 +708,105 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local perdió la partida."
         );
 
-        SoundManager.Instance.PlayLose();
+        if (
+            SoundManager.Instance != null
+        )
+        {
+            SoundManager.Instance.PlayLose();
+        }
 
-        SetResultText("Jugador 2 ha ganado!", Color.green);
+        SetResultText(
+            "¡PERDISTE!",
+            Color.red
+        );
+
+        FreezeLocalPlayer();
+
         ShowResultPanel();
-
-
     }
 
-    // ======================
-    // PANEL DE RESULTADOS
-    // ======================
 
-      private void ShowResultPanel()
+    // =====================================================
+    // RESULTADO LOCAL - EMPATE
+    // =====================================================
+
+    private void OnLocalPlayerDraw()
     {
-        // Detener gameplay
-        //Time.timeScale = 0f;
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "El jugador local terminó en empate."
+        );
+
+        SetResultText(
+            "¡EMPATE!",
+            Color.black
+        );
+
+        FreezeLocalPlayer();
+
+        ShowResultPanel();
+    }
 
 
-        // Mostrar panel
+    // =====================================================
+    // CONGELAR JUGADOR LOCAL
+    // =====================================================
+
+    private void FreezeLocalPlayer()
+    {
+        /*
+         * Movimiento
+         */
+
+        NetworkPlayerMovement movement =
+            FindAnyObjectByType<NetworkPlayerMovement>();
+
+        if (movement != null)
+        {
+            movement.FreezeForGameEnd();
+        }
+
+        /*
+         * Interacción
+         */
+
+        NetworkPlayerInteraction interaction =
+            FindAnyObjectByType<NetworkPlayerInteraction>();
+
+        if (interaction != null)
+        {
+            interaction.enabled = false;
+        }
+
+        /*
+         * Cámara
+         */
+
+        PlayerCamera playerCamera =
+            FindAnyObjectByType<PlayerCamera>();
+
+        if (playerCamera != null)
+        {
+            playerCamera.enabled = false;
+        }
+    }
+
+
+    // =====================================================
+    // PANEL DE RESULTADOS
+    // =====================================================
+
+    private void ShowResultPanel()
+    {
+        /*
+         * Congelamos solamente el cliente local.
+         *
+         * No hacerlo en el servidor directamente porque
+         * Time.timeScale no se sincroniza por Netcode.
+         */
+
+        Time.timeScale = 0f;
+
         if (victoryPanel != null)
         {
             victoryPanel.SetActive(true);
@@ -465,16 +814,23 @@ public class NetworkGameManager : NetworkBehaviour
         else
         {
             Debug.LogWarning(
-                "[GameManager] Victory Panel no está asignado."
+                "[NetworkGameManager] " +
+                "Victory Panel no está asignado."
             );
         }
 
-        // Mostrar y liberar mouse
-        Cursor.lockState = CursorLockMode.None;
+        Cursor.lockState =
+            CursorLockMode.None;
+
         Cursor.visible = true;
     }
 
-        private void SetResultText(
+
+    // =====================================================
+    // TEXTO RESULTADO
+    // =====================================================
+
+    private void SetResultText(
         string text,
         Color color
     )
@@ -482,7 +838,8 @@ public class NetworkGameManager : NetworkBehaviour
         if (resultText == null)
         {
             Debug.LogWarning(
-                "[GameManager] ResultText no está asignado."
+                "[NetworkGameManager] " +
+                "ResultText no está asignado."
             );
 
             return;
@@ -491,26 +848,40 @@ public class NetworkGameManager : NetworkBehaviour
         resultText.text = text;
         resultText.color = color;
 
-        // Mantener las características visuales
         resultText.fontSize = 40f;
         resultText.fontStyle = FontStyles.Bold;
     }
 
-        public void ReturnToMainMenu()
+
+    // =====================================================
+    // VOLVER AL MENÚ
+    // =====================================================
+
+    public void ReturnToMainMenu()
     {
         Time.timeScale = 1f;
 
-        // Apagar Network Manager
+        Cursor.lockState =
+            CursorLockMode.None;
+
+        Cursor.visible = true;
+
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
 
-        if (NetworkManager.Singleton.gameObject != null)
+            if (
+                NetworkManager.Singleton.gameObject != null
+            )
             {
-                Destroy(NetworkManager.Singleton.gameObject);
+                Destroy(
+                    NetworkManager.Singleton.gameObject
+                );
             }
         }
 
-        SceneManager.LoadScene("MainMenuScene");
+        SceneManager.LoadScene(
+            "MainMenuScene"
+        );
     }
 }

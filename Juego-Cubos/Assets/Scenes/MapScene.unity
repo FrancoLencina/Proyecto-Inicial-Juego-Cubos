@@ -3429,7 +3429,7 @@ MonoBehaviour:
   gameManager: {fileID: 0}
   localGameManager: {fileID: 0}
   multiplayerGameManager: {fileID: 473262168}
-  targetTime: 5
+  targetTime: 300
   timeRemaining: 0
   textTimer: {fileID: 1924463291}
 --- !u!1 &242681488
@@ -5341,6 +5341,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9bdc1ab3a69d5ea47a51e8762fa0699d, type: 2}
   - {fileID: 11400000, guid: f43060ec4e04e5642ac9543dcf4331ce, type: 2}
   sequenceLength: 5
+  victoryCheckDelay: 1
   victoryPanel: {fileID: 801946465}
   resultText: {fileID: 1702330942}
 --- !u!4 &473262169
@@ -7443,8 +7444,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -108}
-  m_SizeDelta: {x: 175, y: 30}
+  m_AnchoredPosition: {x: 0, y: -96}
+  m_SizeDelta: {x: 175, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &861503165
 MonoBehaviour:
@@ -7607,7 +7608,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3325791964408504549, guid: 9aaf52fce2e472c428b3649bcc1d719a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 7.39
+      value: 4.99
       objectReference: {fileID: 0}
     - target: {fileID: 3325791964408504549, guid: 9aaf52fce2e472c428b3649bcc1d719a, type: 3}
       propertyPath: m_LocalPosition.z

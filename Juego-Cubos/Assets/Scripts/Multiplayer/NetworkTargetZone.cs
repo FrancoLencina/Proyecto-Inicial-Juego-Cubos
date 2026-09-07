@@ -37,6 +37,7 @@ public class NetworkTargetZone : MonoBehaviour
 
     private bool sequenceCompleted;
 
+
     // =====================================================
     // INITIALIZATION
     // =====================================================
@@ -53,6 +54,7 @@ public class NetworkTargetZone : MonoBehaviour
                 : "CLIENTE")
         );
     }
+
 
     private void Start()
     {
@@ -93,6 +95,7 @@ public class NetworkTargetZone : MonoBehaviour
         }
     }
 
+
     // =====================================================
     // UPDATE
     // =====================================================
@@ -119,8 +122,6 @@ public class NetworkTargetZone : MonoBehaviour
          * =================================================
          * SERVIDOR
          * =================================================
-         *
-         * El servidor hace la validación autoritativa.
          */
 
         if (
@@ -132,13 +133,8 @@ public class NetworkTargetZone : MonoBehaviour
 
         /*
          * =================================================
-         * CLIENTE LOCAL
+         * HUD LOCAL
          * =================================================
-         *
-         * Solamente actualizamos el HUD de la zona
-         * correspondiente al jugador local.
-         *
-         * Esto NO se sincroniza por red.
          */
 
         if (
@@ -149,6 +145,7 @@ public class NetworkTargetZone : MonoBehaviour
             UpdateLocalProgressUI();
         }
     }
+
 
     // =====================================================
     // VALIDACIÓN DEL SERVIDOR
@@ -182,6 +179,13 @@ public class NetworkTargetZone : MonoBehaviour
             );
         }
 
+        /*
+         * Si ya se detectó la secuencia completa,
+         * no volvemos a solicitar otra comprobación.
+         *
+         * NetworkGameManager será quien espere y confirme.
+         */
+
         if (sequenceCompleted)
             return;
 
@@ -195,15 +199,118 @@ public class NetworkTargetZone : MonoBehaviour
             ulong playerId =
                 GetZonePlayerId();
 
-            if (playerId != ulong.MaxValue)
+            if (
+                playerId !=
+                ulong.MaxValue
+            )
             {
-                if (isHostZone)
-                gameManager.PlayerCompleted(playerId, true);
-                else
-                gameManager.PlayerCompleted(playerId, false);
+                Debug.Log(
+                    "[NetworkTargetZone] " +
+                    "SECUENCIA COMPLETADA | " +
+                    "Zona: " +
+                    (isHostZone
+                        ? "HOST"
+                        : "CLIENTE") +
+                    " | PlayerId: " +
+                    playerId
+                );
+
+                gameManager.PlayerCompleted(
+                    playerId
+                );
             }
         }
     }
+
+
+    // =====================================================
+    // COMPROBAR SI LA PILA SIGUE COMPLETA
+    // =====================================================
+
+    public bool IsStackComplete()
+    {
+        if (gameManager == null)
+            return false;
+
+        if (
+            gameManager.TargetSequence == null ||
+            gameManager.TargetSequence.Count == 0
+        )
+        {
+            return false;
+        }
+
+        /*
+         * Volvemos a reconstruir la información
+         * antes de responder.
+         */
+
+        CleanInvalidBlocks();
+
+        DetectBlocksInsideZone();
+
+        int progress =
+            GetCorrectProgress();
+
+        currentProgress =
+            progress;
+
+        bool complete =
+            progress >=
+            gameManager.TargetSequence.Count;
+
+        Debug.Log(
+            "[NetworkTargetZone] " +
+            "COMPROBACIÓN FINAL | " +
+            "Zona: " +
+            (isHostZone
+                ? "HOST"
+                : "CLIENTE") +
+            " | " +
+            progress +
+            "/" +
+            gameManager.TargetSequence.Count +
+            " | Completa: " +
+            complete
+        );
+
+        return complete;
+    }
+
+
+    // =====================================================
+    // RESETEAR ESTADO DE COMPLETADO
+    // =====================================================
+
+    public void ResetCompletionState()
+    {
+        sequenceCompleted = false;
+
+        /*
+         * Actualizamos inmediatamente el progreso
+         * para que el sistema pueda detectar una nueva
+         * finalización posteriormente.
+         */
+
+        CleanInvalidBlocks();
+
+        DetectBlocksInsideZone();
+
+        currentProgress =
+            GetCorrectProgress();
+
+        Debug.Log(
+            "[NetworkTargetZone] " +
+            "Estado de completado reiniciado | " +
+            "Zona: " +
+            (isHostZone
+                ? "HOST"
+                : "CLIENTE") +
+            " | Progreso actual: " +
+            currentProgress
+        );
+    }
+
 
     // =====================================================
     // PROGRESO LOCAL DEL HUD
@@ -211,13 +318,6 @@ public class NetworkTargetZone : MonoBehaviour
 
     private void UpdateLocalProgressUI()
     {
-        /*
-        * El cliente hace su propia detección local.
-        *
-        * Esto solamente sirve para mostrar el progreso
-        * visualmente. No determina quién gana.
-        */
-
         CleanInvalidBlocks();
 
         DetectBlocksInsideZone();
@@ -225,25 +325,39 @@ public class NetworkTargetZone : MonoBehaviour
         int localProgress =
             GetCorrectProgress();
 
+        /*
+         * =================================================
+         * SONIDO
+         * =================================================
+         */
 
-        // =====================================================
-        // SONIDO DE BLOQUE CORRECTO
-        // =====================================================
-
-        if (localProgress > lastSoundProgress)
+        if (
+            localProgress >
+            lastSoundProgress
+        )
         {
-            SoundManager.Instance.PlayCorrectPlacement();
+            if (
+                SoundManager.Instance != null
+            )
+            {
+                SoundManager.Instance
+                    .PlayCorrectPlacement();
+            }
         }
 
         lastSoundProgress =
             localProgress;
 
+        /*
+         * =================================================
+         * ACTUALIZAR PROGRESO
+         * =================================================
+         */
 
-        // =====================================================
-        // ACTUALIZAR PROGRESO
-        // =====================================================
-
-        if (localProgress != currentProgress)
+        if (
+            localProgress !=
+            currentProgress
+        )
         {
             currentProgress =
                 localProgress;
@@ -267,8 +381,9 @@ public class NetworkTargetZone : MonoBehaviour
         );
     }
 
+
     // =====================================================
-    // DETERMINAR SI ESTA ES LA ZONA LOCAL
+    // DETERMINAR ZONA LOCAL
     // =====================================================
 
     private bool IsLocalPlayerZone()
@@ -286,25 +401,16 @@ public class NetworkTargetZone : MonoBehaviour
         ulong hostClientId =
             NetworkManager.ServerClientId;
 
-        /*
-         * Si esta es la zona del Host,
-         * solamente corresponde al Host.
-         */
-
         if (isHostZone)
         {
             return localClientId ==
                    hostClientId;
         }
 
-        /*
-         * Si esta es la zona del Cliente,
-         * corresponde al jugador que no es Host.
-         */
-
         return localClientId !=
                hostClientId;
     }
+
 
     // =====================================================
     // DETECTAR BLOQUES
@@ -332,7 +438,9 @@ public class NetworkTargetZone : MonoBehaviour
                 QueryTriggerInteraction.Collide
             );
 
-        foreach (Collider collider in colliders)
+        foreach (
+            Collider collider in colliders
+        )
         {
             if (collider == null)
                 continue;
@@ -345,8 +453,9 @@ public class NetworkTargetZone : MonoBehaviour
                 continue;
 
             /*
-             * Si ya conocemos el dueño,
-             * no necesitamos volver a registrarlo.
+             * Si ya está registrado,
+             * solamente nos aseguramos de que
+             * continúe dentro de la lista.
              */
 
             if (
@@ -372,14 +481,14 @@ public class NetworkTargetZone : MonoBehaviour
             ulong playerId =
                 networkBlock.HolderClientId;
 
-/*             bool belongsToZone =
-                IsBlockFromCorrectPlayer(
-                    playerId
-                );
+            /*
+             * Se mantiene la lógica que tenías:
+             * no filtramos por propietario.
+             *
+             * Esto evita cambiar tu comportamiento
+             * actual de detección.
+             */
 
-            if (!belongsToZone)
-                continue;
- */
             if (
                 !fruitBlocksInside.Contains(
                     networkBlock
@@ -409,6 +518,7 @@ public class NetworkTargetZone : MonoBehaviour
         }
     }
 
+
     // =====================================================
     // TRIGGER ENTER
     // =====================================================
@@ -423,13 +533,6 @@ public class NetworkTargetZone : MonoBehaviour
 
         if (networkBlock == null)
             return;
-
-        /*
-         * Solamente el servidor registra oficialmente
-         * la entrada mediante Trigger.
-         *
-         * El cliente utiliza OverlapBox para su HUD.
-         */
 
         if (
             NetworkManager.Singleton == null ||
@@ -450,15 +553,6 @@ public class NetworkTargetZone : MonoBehaviour
 
         ulong playerId =
             networkBlock.HolderClientId;
-
-/*         if (
-            !IsBlockFromCorrectPlayer(
-                playerId
-            )
-        )
-        {
-            return;
-        } */
 
         if (
             !fruitBlocksInside.Contains(
@@ -487,6 +581,7 @@ public class NetworkTargetZone : MonoBehaviour
             networkBlock.FruitType
         );
     }
+
 
     // =====================================================
     // TRIGGER EXIT
@@ -538,6 +633,7 @@ public class NetworkTargetZone : MonoBehaviour
         );
     }
 
+
     // =====================================================
     // IDENTIFICAR JUGADOR DE LA ZONA
     // =====================================================
@@ -556,9 +652,16 @@ public class NetworkTargetZone : MonoBehaviour
             return NetworkManager.ServerClientId;
         }
 
-        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        foreach (
+            ulong clientId
+            in NetworkManager.Singleton
+                .ConnectedClientsIds
+        )
         {
-            if (clientId != NetworkManager.ServerClientId)
+            if (
+                clientId !=
+                NetworkManager.ServerClientId
+            )
             {
                 return clientId;
             }
@@ -567,11 +670,14 @@ public class NetworkTargetZone : MonoBehaviour
         return ulong.MaxValue;
     }
 
+
     // =====================================================
     // VALIDAR DUEÑO
     // =====================================================
 
-    private bool IsBlockFromCorrectPlayer(ulong playerId)
+    private bool IsBlockFromCorrectPlayer(
+        ulong playerId
+    )
     {
         if (
             NetworkManager.Singleton == null
@@ -580,15 +686,19 @@ public class NetworkTargetZone : MonoBehaviour
             return false;
         }
 
-        ulong hostClientId = NetworkManager.ServerClientId;
+        ulong hostClientId =
+            NetworkManager.ServerClientId;
 
         if (isHostZone)
         {
-            return playerId == hostClientId;
+            return playerId ==
+                   hostClientId;
         }
 
-        return playerId != hostClientId;
+        return playerId !=
+               hostClientId;
     }
+
 
     // =====================================================
     // LIMPIAR BLOQUES
@@ -596,7 +706,12 @@ public class NetworkTargetZone : MonoBehaviour
 
     private void CleanInvalidBlocks()
     {
-        for (int i = fruitBlocksInside.Count - 1; i >= 0; i--)
+        for (
+            int i =
+                fruitBlocksInside.Count - 1;
+            i >= 0;
+            i--
+        )
         {
             NetworkFruitBlock networkBlock =
                 fruitBlocksInside[i];
@@ -624,6 +739,7 @@ public class NetworkTargetZone : MonoBehaviour
             }
         }
     }
+
 
     // =====================================================
     // CALCULAR PROGRESO
@@ -669,14 +785,10 @@ public class NetworkTargetZone : MonoBehaviour
             ulong ownerId =
                 blockOwners[block];
 
-  /*           if (
-                !IsBlockFromCorrectPlayer(
-                    ownerId
-                )
-            )
-            {
-                break;
-            } */
+            /*
+             * Mantenemos desactivado el filtro
+             * de propietario que ya tenías.
+             */
 
             if (
                 ((1 << block.gameObject.layer) &
@@ -722,6 +834,7 @@ public class NetworkTargetZone : MonoBehaviour
         return correctCount;
     }
 
+
     // =====================================================
     // ORDENAR POR ALTURA
     // =====================================================
@@ -739,6 +852,7 @@ public class NetworkTargetZone : MonoBehaviour
             )
             .ToList();
     }
+
 
     // =====================================================
     // VALIDAR APILAMIENTO
@@ -807,6 +921,7 @@ public class NetworkTargetZone : MonoBehaviour
                overlapsZ;
     }
 
+
     // =====================================================
     // ACTUALIZAR UI
     // =====================================================
@@ -849,6 +964,7 @@ public class NetworkTargetZone : MonoBehaviour
             progress
         );
     }
+
 
     // =====================================================
     // PROPIEDADES
