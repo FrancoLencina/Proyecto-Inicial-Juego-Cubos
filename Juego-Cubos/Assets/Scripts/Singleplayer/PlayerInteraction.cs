@@ -53,6 +53,8 @@ public partial class PlayerInteraction : MonoBehaviour
     // INPUT
     // =========================================================
 
+    public Animator animator;
+    
     private PlayerControls controls;
 
 

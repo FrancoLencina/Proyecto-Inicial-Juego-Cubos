@@ -250,6 +250,7 @@ public partial class PlayerInteraction
                 holdPoint.rotation;
         }
 
+        animator.SetBool("IsHoldingBlock", true);
         SoundManager.Instance.PlayGrabBlock();
     }
 
@@ -292,6 +293,7 @@ public partial class PlayerInteraction
         heldCollider =
             null;
 
+            animator.SetBool("IsHoldingBlock", false);
             SoundManager.Instance.PlayDropBlock();
     }
 }

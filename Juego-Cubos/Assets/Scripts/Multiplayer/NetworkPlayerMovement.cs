@@ -16,6 +16,9 @@ public class NetworkPlayerMovement : NetworkBehaviour
     public float jumpHoldForce = 15f;
     public float maxJumpTime = 0.4f;
 
+    [Header("Animation")]
+    [SerializeField] private Animator animator;
+
     [Header("Footsteps")]
 public float footstepInterval = 0.4f;
 
@@ -39,6 +42,7 @@ private float footstepTimer;
     private PlayerControls controls;
     private Vector3 movement;
 
+    private Animator playerAnimator;
     private bool isSprinting;
 
     private bool isGrounded;
@@ -86,11 +90,17 @@ private void OnDisable()
         rb = GetComponent<Rigidbody>();
 
         playerInteraction =
-    GetComponent<NetworkPlayerInteraction>();
+            GetComponent<NetworkPlayerInteraction>();
 
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+        }
 
-        // Solo el jugador dueño puede controlar
-        // este personaje.
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
 
         if (!IsOwner)
         {
@@ -134,6 +144,39 @@ private void OnDisable()
             transform.right * horizontal +
             transform.forward * vertical;
 
+        // =====================================================
+        // ANIMACIÓN DE MOVIMIENTO
+        // =====================================================
+
+        if (animator != null)
+        {
+            animator.SetFloat(
+                "VelX",
+                horizontal
+            );
+
+            animator.SetFloat(
+                "VelY",
+                vertical
+            );
+        }
+
+        // =====================================================
+        // ANIMACIÓN - BLOQUE SOSTENIDO
+        // =====================================================
+
+        if (animator != null)
+        {
+            bool isHoldingBlock =
+                playerInteraction != null &&
+                playerInteraction.IsHoldingBlock;
+
+            animator.SetBool(
+                "IsHoldingBlock",
+                isHoldingBlock
+            );
+        }
+
 
         if (movement.magnitude > 1f)
             movement.Normalize();
@@ -171,6 +214,11 @@ private void OnDisable()
             );
 
             SoundManager.Instance.PlayJump();
+
+            if (animator != null)
+            {
+                animator.SetTrigger("Jump");
+            }
 
             isGrounded = false;
             isJumping = true;
@@ -424,6 +472,14 @@ private void OnDisable()
         else
         {
             isGrounded = false;
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool(
+                "IsGrounded",
+                isGrounded
+            );
         }
 
 
