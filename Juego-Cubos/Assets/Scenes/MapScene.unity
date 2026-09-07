@@ -5879,15 +5879,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 88913422654012246, guid: a857ec3e6ef922843bfea771a94540ba, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 9.02
+      value: 8.98
       objectReference: {fileID: 0}
     - target: {fileID: 88913422654012246, guid: a857ec3e6ef922843bfea771a94540ba, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.96
+      value: 6.47
       objectReference: {fileID: 0}
     - target: {fileID: 88913422654012246, guid: a857ec3e6ef922843bfea771a94540ba, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -52.4
+      value: -51.88
       objectReference: {fileID: 0}
     - target: {fileID: 88913422654012246, guid: a857ec3e6ef922843bfea771a94540ba, type: 3}
       propertyPath: m_LocalRotation.w
@@ -11147,7 +11147,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 455176, guid: b5180305eab9b7048b29d07ff59f3a64, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -46.558056
+      value: -45.78
       objectReference: {fileID: 0}
     - target: {fileID: 455176, guid: b5180305eab9b7048b29d07ff59f3a64, type: 3}
       propertyPath: m_LocalRotation.w
@@ -12177,6 +12177,50 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fdc130d8263f0d040a18817e99a4fb3d, type: 3}
+--- !u!1 &2070916929
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2070916931}
+  - component: {fileID: 2070916930}
+  m_Layer: 0
+  m_Name: GameplayMusicController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2070916930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2070916929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff94d9625d0211146a9be87261ad490a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameplayMusic
+--- !u!4 &2070916931
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2070916929}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2142947037
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12292,6 +12336,7 @@ SceneRoots:
   - {fileID: 387670295}
   - {fileID: 267181044}
   - {fileID: 81100601}
+  - {fileID: 2070916931}
   - {fileID: 1879432311}
   - {fileID: 242681494}
   - {fileID: 1280719119}
