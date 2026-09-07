@@ -11,6 +11,9 @@ public class Timer : MonoBehaviour
     [SerializeField]
     private LocalGameManager localGameManager;
 
+    [SerializeField]
+    private NetworkGameManager multiplayerGameManager;
+
 
     [Header("Timer")]
 
@@ -38,6 +41,8 @@ public class Timer : MonoBehaviour
         timeRemaining = targetTime;
 
         isCountingDown = true;
+
+        Debug.Log(timeRemaining);
 
         UpdateTimerDisplay(timeRemaining);
     }
@@ -146,6 +151,17 @@ public class Timer : MonoBehaviour
             localGameManager.TimeRanOut();
 
             return;
+        }
+
+        // =============================================
+        // ONLINE MULTIPLAYER
+        // =============================================
+        
+        if (multiplayerGameManager != null)
+        {
+            multiplayerGameManager.TimeRanOut();
+            return;
+
         }
 
 
