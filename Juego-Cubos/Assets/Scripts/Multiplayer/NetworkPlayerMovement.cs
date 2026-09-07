@@ -16,10 +16,13 @@ public class NetworkPlayerMovement : NetworkBehaviour
     public float jumpHoldForce = 15f;
     public float maxJumpTime = 0.4f;
 
-    [Header("Footsteps")]
-    public float footstepInterval = 0.4f;
+    [Header("Animation")]
+    [SerializeField] private Animator animator;
 
-    private float footstepTimer;
+    [Header("Footsteps")]
+public float footstepInterval = 0.4f;
+
+private float footstepTimer;
 
     [Header("Ground Detection")]
     public LayerMask groundLayer;
@@ -35,63 +38,48 @@ public class NetworkPlayerMovement : NetworkBehaviour
     public float blockPushInterval = 0.05f;
 
     private Rigidbody rb;
-
     private NetworkPlayerInteraction playerInteraction;
-
     private PlayerControls controls;
-
     private Vector3 movement;
 
+    private Animator playerAnimator;
     private bool isSprinting;
 
     private bool isGrounded;
-
     private bool isJumping;
-
     private float jumpTime;
-
     private bool wasGrounded;
 
     private Vector3 wallNormal;
 
     private float pendingRotation;
 
-    private bool gameEnded;
-
+    // Guarda cuándo se envió el último impulso para cada bloque.
     private Dictionary<NetworkObject, float> lastBlockPushTimes =
         new Dictionary<NetworkObject, float>();
 
+// =========================================================
+// AWAKE
+// =========================================================
 
-    // =========================================================
-    // AWAKE
-    // =========================================================
+private void Awake()
+{
+    controls = new PlayerControls();
 
-    private void Awake()
-    {
-        controls =
-            new PlayerControls();
+    InputSettings.LoadBindings(
+        controls
+    );
+}
 
-        InputSettings.LoadBindings(
-            controls
-        );
-    }
+private void OnEnable()
+{
+    controls.Enable();
+}
 
-
-    // =========================================================
-    // ENABLE / DISABLE
-    // =========================================================
-
-    private void OnEnable()
-    {
-        controls.Enable();
-    }
-
-
-    private void OnDisable()
-    {
-        controls.Disable();
-    }
-
+private void OnDisable()
+{
+    controls.Disable();
+}
 
     // =========================================================
     // NETWORK SPAWN
@@ -99,16 +87,20 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        rb =
-            GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>();
 
         playerInteraction =
             GetComponent<NetworkPlayerInteraction>();
 
-        /*
-         * Solo el jugador dueño controla
-         * este personaje.
-         */
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+        }
+
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
 
         if (!IsOwner)
         {
@@ -124,10 +116,8 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
     private void Update()
     {
+        // Seguridad extra.
         if (!IsOwner)
-            return;
-
-        if (gameEnded)
             return;
 
         CheckGround();
@@ -138,7 +128,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // =====================================================
 
         Vector2 moveInput =
-            controls.Player.Move.ReadValue<Vector2>();
+        controls.Player.Move.ReadValue<Vector2>();
 
         float horizontal =
             moveInput.x;
@@ -149,40 +139,61 @@ public class NetworkPlayerMovement : NetworkBehaviour
         isSprinting =
             controls.Player.Sprint.IsPressed();
 
+
         movement =
             transform.right * horizontal +
             transform.forward * vertical;
 
+        // =====================================================
+        // ANIMACIÓN DE MOVIMIENTO
+        // =====================================================
+
+        if (animator != null)
+        {
+            animator.SetFloat(
+                "VelX",
+                horizontal
+            );
+
+            animator.SetFloat(
+                "VelY",
+                vertical
+            );
+        }
+
+        // =====================================================
+        // ANIMACIÓN - BLOQUE SOSTENIDO
+        // =====================================================
+
+        if (animator != null)
+        {
+            bool isHoldingBlock =
+                playerInteraction != null &&
+                playerInteraction.IsHoldingBlock;
+
+            animator.SetBool(
+                "IsHoldingBlock",
+                isHoldingBlock
+            );
+        }
+
+
         if (movement.magnitude > 1f)
             movement.Normalize();
-
 
         // =====================================================
         // FOOTSTEPS
         // =====================================================
 
-        if (
-            isGrounded &&
-            movement.magnitude > 0.1f
-        )
+        if (isGrounded && movement.magnitude > 0.1f)
         {
-            footstepTimer -=
-                Time.deltaTime;
+            footstepTimer -= Time.deltaTime;
 
-            if (
-                footstepTimer <= 0f
-            )
+            if (footstepTimer <= 0f)
             {
-                if (
-                    SoundManager.Instance != null
-                )
-                {
-                    SoundManager.Instance
-                        .PlayFootstep();
-                }
+                SoundManager.Instance.PlayFootstep();
 
-                footstepTimer =
-                    footstepInterval;
+                footstepTimer = footstepInterval;
             }
         }
         else
@@ -190,34 +201,27 @@ public class NetworkPlayerMovement : NetworkBehaviour
             footstepTimer = 0f;
         }
 
-
         // =====================================================
         // COMENZAR SALTO
         // =====================================================
 
-        if (
-            controls.Player.Jump
-                .WasPressedThisFrame() &&
-            isGrounded
-        )
+        if (controls.Player.Jump.WasPressedThisFrame() &&
+            isGrounded)
         {
             rb.AddForce(
                 Vector3.up * jumpForce,
                 ForceMode.Impulse
             );
 
-            if (
-                SoundManager.Instance != null
-            )
+            SoundManager.Instance.PlayJump();
+
+            if (animator != null)
             {
-                SoundManager.Instance
-                    .PlayJump();
+                animator.SetTrigger("Jump");
             }
 
             isGrounded = false;
-
             isJumping = true;
-
             jumpTime = 0f;
         }
 
@@ -226,10 +230,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // SOLTAR ESPACIO
         // =====================================================
 
-        if (
-            controls.Player.Jump
-                .WasReleasedThisFrame()
-        )
+        if (controls.Player.Jump.WasReleasedThisFrame())
         {
             isJumping = false;
         }
@@ -240,32 +241,19 @@ public class NetworkPlayerMovement : NetworkBehaviour
     // SOLICITAR ROTACIÓN
     // =========================================================
 
-    public void RequestRotation(
-        float rotation
-    )
+    public void RequestRotation(float rotation)
     {
         if (!IsOwner)
             return;
 
-        if (gameEnded)
-            return;
-
-        pendingRotation +=
-            rotation;
+        pendingRotation += rotation;
     }
-
-
-    // =========================================================
-    // FIXED UPDATE
-    // =========================================================
 
     private void FixedUpdate()
     {
         if (!IsOwner)
             return;
 
-        if (gameEnded)
-            return;
 
         Vector3 velocity =
             rb.linearVelocity;
@@ -280,8 +268,10 @@ public class NetworkPlayerMovement : NetworkBehaviour
                 ? speed * sprintMultiplier
                 : speed;
 
+
         Vector3 desiredVelocity =
             movement * currentSpeed;
+
 
         Vector3 desiredMovement =
             desiredVelocity *
@@ -292,16 +282,13 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // BLOQUE SOSTENIDO
         // =====================================================
 
-        if (
-            playerInteraction != null &&
-            playerInteraction.IsHoldingBlock
-        )
+        if (playerInteraction != null &&
+            playerInteraction.IsHoldingBlock)
         {
             desiredMovement =
-                playerInteraction
-                    .GetAllowedPlayerMovement(
-                        desiredMovement
-                    );
+                playerInteraction.GetAllowedPlayerMovement(
+                    desiredMovement
+                );
         }
 
 
@@ -309,9 +296,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // CONVERTIR A VELOCIDAD
         // =====================================================
 
-        if (
-            Time.fixedDeltaTime > 0f
-        )
+        if (Time.fixedDeltaTime > 0f)
         {
             desiredVelocity =
                 desiredMovement /
@@ -323,10 +308,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // EVITAR EMPUJAR CONTRA PAREDES
         // =====================================================
 
-        if (
-            wallNormal !=
-            Vector3.zero
-        )
+        if (wallNormal != Vector3.zero)
         {
             float movementIntoWall =
                 Vector3.Dot(
@@ -334,9 +316,8 @@ public class NetworkPlayerMovement : NetworkBehaviour
                     wallNormal
                 );
 
-            if (
-                movementIntoWall < 0f
-            )
+
+            if (movementIntoWall < 0f)
             {
                 desiredVelocity =
                     Vector3.ProjectOnPlane(
@@ -357,6 +338,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         velocity.z =
             desiredVelocity.z;
 
+
         rb.linearVelocity =
             velocity;
 
@@ -365,36 +347,31 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // ROTACIÓN
         // =====================================================
 
-        if (
-            Mathf.Abs(
-                pendingRotation
-            ) > 0.0001f
-        )
+        if (Mathf.Abs(pendingRotation) >
+            0.0001f)
         {
             float requestedRotation =
                 pendingRotation;
 
             pendingRotation = 0f;
 
+
             float allowedRotation =
                 requestedRotation;
 
-            if (
-                playerInteraction != null &&
-                playerInteraction.IsHoldingBlock
-            )
+
+            if (playerInteraction != null &&
+                playerInteraction.IsHoldingBlock)
             {
                 Vector3 correction =
-                    playerInteraction
-                        .GetRotationCorrection(
-                            requestedRotation,
-                            out allowedRotation
-                        );
+                    playerInteraction.GetRotationCorrection(
+                        requestedRotation,
+                        out allowedRotation
+                    );
 
-                if (
-                    correction.sqrMagnitude >
-                    0.000001f
-                )
+
+                if (correction.sqrMagnitude >
+                    0.000001f)
                 {
                     rb.MovePosition(
                         rb.position +
@@ -403,11 +380,9 @@ public class NetworkPlayerMovement : NetworkBehaviour
                 }
             }
 
-            if (
-                Mathf.Abs(
-                    allowedRotation
-                ) > 0.0001f
-            )
+
+            if (Mathf.Abs(allowedRotation) >
+                0.0001f)
             {
                 Quaternion targetRotation =
                     rb.rotation *
@@ -416,6 +391,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
                         allowedRotation,
                         0f
                     );
+
 
                 rb.MoveRotation(
                     targetRotation
@@ -428,15 +404,10 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // SALTO VARIABLE
         // =====================================================
 
-        if (
-            isJumping &&
-            controls.Player.Jump.IsPressed()
-        )
+        if (isJumping &&
+            controls.Player.Jump.IsPressed())
         {
-            if (
-                jumpTime <
-                maxJumpTime
-            )
+            if (jumpTime < maxJumpTime)
             {
                 rb.AddForce(
                     Vector3.up *
@@ -469,8 +440,9 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
     private void CheckGround()
     {
-        wasGrounded =
-            isGrounded;
+        // Guardar el estado anterior.
+        wasGrounded = isGrounded;
+
 
         Vector3 origin =
             transform.position +
@@ -478,6 +450,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
             groundCheckHeight;
 
         RaycastHit hit;
+
 
         bool detected =
             Physics.SphereCast(
@@ -490,10 +463,9 @@ public class NetworkPlayerMovement : NetworkBehaviour
                 QueryTriggerInteraction.Ignore
             );
 
-        if (
-            detected &&
-            hit.normal.y > 0.5f
-        )
+
+        if (detected &&
+            hit.normal.y > 0.5f)
         {
             isGrounded = true;
         }
@@ -502,23 +474,23 @@ public class NetworkPlayerMovement : NetworkBehaviour
             isGrounded = false;
         }
 
+        if (animator != null)
+        {
+            animator.SetBool(
+                "IsGrounded",
+                isGrounded
+            );
+        }
+
 
         // =====================================================
         // LANDING SOUND
         // =====================================================
 
-        if (
-            !wasGrounded &&
-            isGrounded
-        )
+        if (!wasGrounded &&
+            isGrounded)
         {
-            if (
-                SoundManager.Instance != null
-            )
-            {
-                SoundManager.Instance
-                    .PlayLand();
-            }
+            SoundManager.Instance.PlayLand();
         }
     }
 
@@ -528,14 +500,11 @@ public class NetworkPlayerMovement : NetworkBehaviour
     // =========================================================
 
     private void OnCollisionStay(
-        Collision collision
-    )
+        Collision collision)
     {
         if (!IsOwner)
             return;
 
-        if (gameEnded)
-            return;
 
         if (collision == null)
             return;
@@ -546,10 +515,10 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // -----------------------------------------------------
 
         NetworkFruitBlock block =
-            collision.gameObject
-                .GetComponentInParent<
-                    NetworkFruitBlock
-                >();
+            collision.gameObject.GetComponentInParent<
+                NetworkFruitBlock
+            >();
+
 
         if (block != null)
         {
@@ -566,22 +535,19 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // BLOQUES HELD / FRUIT BLOCKS
         // -----------------------------------------------------
 
-        if (
-            collision.gameObject.layer ==
+        if (collision.gameObject.layer ==
             LayerMask.NameToLayer(
                 "HeldFruitBlock"
-            )
-        )
+            ))
         {
             return;
         }
 
-        if (
-            collision.gameObject.layer ==
+
+        if (collision.gameObject.layer ==
             LayerMask.NameToLayer(
                 "FruitBlocks"
-            )
-        )
+            ))
         {
             return;
         }
@@ -591,17 +557,14 @@ public class NetworkPlayerMovement : NetworkBehaviour
         // PAREDES
         // -----------------------------------------------------
 
-        foreach (
-            ContactPoint contact
-            in collision.contacts
-        )
+        foreach (ContactPoint contact
+                 in collision.contacts)
         {
             Vector3 normal =
                 contact.normal;
 
-            if (
-                normal.y < 0.5f
-            )
+
+            if (normal.y < 0.5f)
             {
                 wallNormal =
                     normal;
@@ -615,168 +578,142 @@ public class NetworkPlayerMovement : NetworkBehaviour
     // =========================================================
 
     private void HandleBlockCollision(
-        Collision collision,
-        NetworkFruitBlock block
-    )
+    Collision collision,
+    NetworkFruitBlock block)
+{
+    if (block == null)
+        return;
+
+    if (block.NetworkObject == null)
+        return;
+
+    // -----------------------------------------------------
+    // NO EMPUJAR EL BLOQUE QUE ESTE JUGADOR ESTÁ SOSTENIENDO
+    // -----------------------------------------------------
+
+    if (block.IsBeingHeld &&
+        block.HolderClientId ==
+        NetworkManager.LocalClientId)
     {
-        if (block == null)
-            return;
-
-        if (block.NetworkObject == null)
-            return;
-
-
-        // -----------------------------------------------------
-        // NO EMPUJAR EL BLOQUE QUE ESTE JUGADOR SOSTIENE
-        // -----------------------------------------------------
-
-        if (
-            block.IsBeingHeld &&
-            block.HolderClientId ==
-            NetworkManager.LocalClientId
-        )
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // DIRECCIÓN DEL MOVIMIENTO
-        // -----------------------------------------------------
-
-        Vector3 horizontalMovement =
-            new Vector3(
-                movement.x,
-                0f,
-                movement.z
-            );
-
-        if (
-            horizontalMovement.sqrMagnitude <
-            0.01f
-        )
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // DIRECCIÓN DEL EMPUJE
-        // -----------------------------------------------------
-
-        Vector3 pushDirection =
-            Vector3.zero;
-
-        foreach (
-            ContactPoint contact
-            in collision.contacts
-        )
-        {
-            Vector3 direction =
-                -contact.normal;
-
-            direction.y = 0f;
-
-            if (
-                direction.sqrMagnitude >
-                0.001f
-            )
-            {
-                pushDirection =
-                    direction.normalized;
-
-                break;
-            }
-        }
-
-        if (
-            pushDirection ==
-            Vector3.zero
-        )
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // COMPROBAR DIRECCIÓN DEL INPUT
-        // -----------------------------------------------------
-
-        Vector3 movementDirection =
-            horizontalMovement.normalized;
-
-        float movementIntoBlock =
-            Vector3.Dot(
-                movementDirection,
-                pushDirection
-            );
-
-        if (
-            movementIntoBlock <= 0.1f
-        )
-        {
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // LIMITAR FRECUENCIA
-        // -----------------------------------------------------
-
-        float currentTime =
-            Time.time;
-
-        if (
-            lastBlockPushTimes.TryGetValue(
-                block.NetworkObject,
-                out float lastPushTime
-            )
-        )
-        {
-            if (
-                currentTime -
-                lastPushTime <
-                blockPushInterval
-            )
-            {
-                return;
-            }
-        }
-
-        lastBlockPushTimes[
-            block.NetworkObject
-        ] = currentTime;
-
-
-        // -----------------------------------------------------
-        // CALCULAR IMPULSO
-        // -----------------------------------------------------
-
-        float pushStrength =
-            speed *
-            blockPushForce;
-
-        Vector3 impulse =
-            pushDirection *
-            pushStrength;
-
-
-        // -----------------------------------------------------
-        // ENVIAR AL SERVIDOR
-        // -----------------------------------------------------
-
-        PushBlockServerRpc(
-            block.NetworkObject,
-            impulse
-        );
+        return;
     }
 
+    // -----------------------------------------------------
+    // OBTENER DIRECCIÓN DE MOVIMIENTO DEL INPUT
+    //
+    // NO usamos rb.linearVelocity porque cuando el jugador
+    // choca contra un bloque kinematic, Unity puede dejar
+    // la velocidad física en cero.
+    // -----------------------------------------------------
 
+    Vector3 horizontalMovement =
+        new Vector3(
+            movement.x,
+            0f,
+            movement.z
+        );
+
+    if (horizontalMovement.sqrMagnitude <
+        0.01f)
+    {
+        return;
+    }
+
+    // -----------------------------------------------------
+    // BUSCAR DIRECCIÓN DEL EMPUJE
+    // -----------------------------------------------------
+
+    Vector3 pushDirection =
+        Vector3.zero;
+
+    foreach (ContactPoint contact
+             in collision.contacts)
+    {
+        Vector3 direction =
+            -contact.normal;
+
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude >
+            0.001f)
+        {
+            pushDirection =
+                direction.normalized;
+
+            break;
+        }
+    }
+
+    if (pushDirection == Vector3.zero)
+        return;
+
+    // -----------------------------------------------------
+    // COMPROBAR QUE EL INPUT REALMENTE VA HACIA EL BLOQUE
+    // -----------------------------------------------------
+
+    Vector3 movementDirection =
+        horizontalMovement.normalized;
+
+    float movementIntoBlock =
+        Vector3.Dot(
+            movementDirection,
+            pushDirection
+        );
+
+    // Si el jugador no está intentando avanzar hacia el bloque,
+    // no aplicar empuje.
+
+    if (movementIntoBlock <= 0.1f)
+        return;
+
+    // -----------------------------------------------------
+    // LIMITAR FRECUENCIA
+    // -----------------------------------------------------
+
+    float currentTime =
+        Time.time;
+
+    if (lastBlockPushTimes.TryGetValue(
+        block.NetworkObject,
+        out float lastPushTime))
+    {
+        if (currentTime - lastPushTime <
+            blockPushInterval)
+        {
+            return;
+        }
+    }
+
+    lastBlockPushTimes[
+        block.NetworkObject
+    ] = currentTime;
+
+    // -----------------------------------------------------
+    // CALCULAR IMPULSO
+    // -----------------------------------------------------
+
+    float pushStrength =
+    speed *
+    blockPushForce;
+
+    Vector3 impulse =
+    pushDirection *
+    pushStrength;
+
+    // -----------------------------------------------------
+    // ENVIAR AL SERVIDOR
+    // -----------------------------------------------------
+
+    PushBlockServerRpc(
+        block.NetworkObject,
+        impulse
+    );
+}
     // =========================================================
     // SERVER RPC - EMPUJAR BLOQUE
     // =========================================================
 
-    [ServerRpc]
+   [ServerRpc]
     private void PushBlockServerRpc(
         NetworkObjectReference blockReference,
         Vector3 impulse
@@ -786,45 +723,38 @@ public class NetworkPlayerMovement : NetworkBehaviour
             "[BODY PUSH SERVER 1] RPC recibido"
         );
 
-        if (
-            !blockReference.TryGet(
-                out NetworkObject networkObject
-            )
-        )
+        if (!blockReference.TryGet(
+            out NetworkObject networkObject
+        ))
         {
             Debug.Log(
-                "[BODY PUSH SERVER STOP] " +
-                "No se encontró NetworkObject"
+                "[BODY PUSH SERVER STOP] No se encontró NetworkObject"
             );
 
             return;
         }
 
         NetworkFruitBlock block =
-            networkObject.GetComponent<
-                NetworkFruitBlock>();
+            networkObject.GetComponent<NetworkFruitBlock>();
 
         if (block == null)
         {
             Debug.Log(
-                "[BODY PUSH SERVER STOP] " +
-                "NetworkFruitBlock es null"
+                "[BODY PUSH SERVER STOP] NetworkFruitBlock es null"
             );
 
             return;
         }
 
         Debug.Log(
-            "[BODY PUSH SERVER 2] " +
-            "Bloque encontrado | Held: " +
+            "[BODY PUSH SERVER 2] Bloque encontrado | Held: " +
             block.IsBeingHeld
         );
 
         if (block.IsBeingHeld)
         {
             Debug.Log(
-                "[BODY PUSH SERVER STOP] " +
-                "Bloque sostenido"
+                "[BODY PUSH SERVER STOP] Bloque sostenido"
             );
 
             return;
@@ -832,10 +762,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
 
         float maxImpulse = 3f;
 
-        if (
-            impulse.magnitude >
-            maxImpulse
-        )
+        if (impulse.magnitude > maxImpulse)
         {
             impulse =
                 impulse.normalized *
@@ -843,14 +770,12 @@ public class NetworkPlayerMovement : NetworkBehaviour
         }
 
         Debug.Log(
-            "[BODY PUSH SERVER 3] " +
-            "Aplicando impulso: " +
+            "[BODY PUSH SERVER 3] Aplicando impulso: " +
             impulse
         );
 
         Debug.Log(
-            "[BODY PUSH SERVER 4] " +
-            "Llamando ApplyServerImpulse"
+            "[BODY PUSH SERVER 4] Llamando ApplyServerImpulse"
         );
 
         block.ApplyServerImpulse(
@@ -858,75 +783,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
         );
 
         Debug.Log(
-            "[BODY PUSH SERVER 5] " +
-            "ApplyServerImpulse finalizado"
+            "[BODY PUSH SERVER 5] ApplyServerImpulse finalizado"
         );
     }
-
-
-    // =========================================================
-    // CONGELAR AL FINAL DE LA PARTIDA
-    // =========================================================
-
-    public void FreezeForGameEnd()
-    {
-        if (!IsOwner)
-            return;
-
-        gameEnded = true;
-
-        /*
-         * Detener movimiento físico inmediatamente.
-         */
-
-        if (rb != null)
-        {
-            rb.linearVelocity =
-                Vector3.zero;
-
-            rb.angularVelocity =
-                Vector3.zero;
-        }
-
-        movement =
-            Vector3.zero;
-
-        pendingRotation =
-            0f;
-
-        isJumping =
-            false;
-
-        isSprinting =
-            false;
-
-        footstepTimer =
-            0f;
-
-        /*
-         * Desactivar el control.
-         */
-
-        controls.Disable();
-
-        /*
-         * Desactivar el componente para que no vuelva
-         * a procesar movimiento.
-         */
-
-        enabled = false;
-
-        Debug.Log(
-            "[NetworkPlayerMovement] " +
-            "Jugador congelado por final de partida."
-        );
-    }
-
-
-    // =========================================================
-    // PROPIEDAD DE SUELO
-    // =========================================================
-
-    public bool IsGrounded =>
-        isGrounded;
 }
