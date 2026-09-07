@@ -58,7 +58,7 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
 
-    // =====================================================
+// =====================================================
     // NETWORK SPAWN
     // =====================================================
 
@@ -67,15 +67,10 @@ public class NetworkGameManager : NetworkBehaviour
         networkSequence.OnListChanged +=
             OnSequenceChanged;
 
-        Debug.Log(
-            "[NetworkGameManager] Network Spawn | " +
-            "IsServer: " + IsServer +
-            " | IsClient: " + IsClient +
-            " | IsHost: " + IsHost
-        );
-
         if (IsServer)
         {
+            // En caso de Disconnect Mid-Match
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
             GenerateSequence();
         }
         else
@@ -83,7 +78,6 @@ public class NetworkGameManager : NetworkBehaviour
             UpdateLocalSequence();
         }
     }
-
 
     // =====================================================
     // NETWORK DESPAWN
@@ -94,17 +88,34 @@ public class NetworkGameManager : NetworkBehaviour
         networkSequence.OnListChanged -=
             OnSequenceChanged;
 
-        if (sequenceUICoroutine != null)
+        if (IsServer && NetworkManager.Singleton != null)
         {
-            StopCoroutine(sequenceUICoroutine);
-            sequenceUICoroutine = null;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
         }
 
-        if (victoryCoroutine != null)
+        if (sequenceUICoroutine != null)
         {
-            StopCoroutine(victoryCoroutine);
-            victoryCoroutine = null;
+            StopCoroutine(
+                sequenceUICoroutine
+            );
+
+            sequenceUICoroutine = null;
         }
+    }
+
+    // =====================================================
+    // MANEJAR DESCONEXIÓN MID-MATCH
+    // =====================================================
+
+    private void OnClientDisconnect(ulong clientId)
+    {
+        if (!IsServer) return;
+
+        if (gameFinished) return;
+
+        Debug.Log("[NetworkGameManager] Un jugador se ha desconectado: " + clientId);
+
+        ReturnToMainMenu();
     }
 
 
