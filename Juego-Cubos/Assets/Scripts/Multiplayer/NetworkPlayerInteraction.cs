@@ -498,6 +498,8 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
                     holdPoint.rotation;
             }
 
+            SoundManager.Instance.PlayGrabBlock();
+
 
             return;
         }
@@ -541,6 +543,8 @@ public partial class NetworkPlayerInteraction : NetworkBehaviour
 
         heldCollider =
             null;
+
+        SoundManager.Instance.PlayDropBlock();
     }
 
 }

@@ -29,6 +29,8 @@ public class MenuUI : MonoBehaviour
 
     private void Start()
     {
+        SoundManager.Instance.PlayMenuMusic();
+        
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
 
