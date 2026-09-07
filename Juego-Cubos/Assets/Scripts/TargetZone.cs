@@ -175,6 +175,8 @@ public class TargetZone : MonoBehaviour
                     .DisplayName
             );
         }
+
+        SoundManager.Instance.PlayCorrectPlacement();
     }
 
 

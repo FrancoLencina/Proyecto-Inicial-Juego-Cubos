@@ -20,6 +20,11 @@ public class PlayerMovement : MonoBehaviour
     public float groundCheckRadius = 0.25f;
     public float groundCheckDistance = 0.5f;
 
+    [Header("Footsteps")]
+    public float footstepInterval = 0.4f;
+
+    private float footstepTimer;
+
     public Animator animator;
 
     private Rigidbody rb;
@@ -36,6 +41,8 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isJumping;
     private float jumpTime;
+
+    private bool wasGrounded;
 
     private Vector3 wallNormal;
 
@@ -142,6 +149,7 @@ public class PlayerMovement : MonoBehaviour
             jumpTime = 0f;
 
             animator.SetTrigger("Jump");
+            SoundManager.Instance.PlayJump();
         }
 
 
@@ -152,6 +160,21 @@ public class PlayerMovement : MonoBehaviour
         if (controls.Player.Jump.WasReleasedThisFrame())
         {
             isJumping = false;
+        }
+
+        if (isGrounded && movement.magnitude > 0.1f)
+        {
+            footstepTimer -= Time.deltaTime;
+
+            if (footstepTimer <= 0f)
+            {
+                SoundManager.Instance.PlayFootstep();
+                footstepTimer = footstepInterval;
+            }
+        }
+        else
+        {
+            footstepTimer = 0f;
         }
     }
 
@@ -399,7 +422,15 @@ public class PlayerMovement : MonoBehaviour
         {
             isGrounded = false;
         }
+
+        if (!wasGrounded && isGrounded)
+        {
+            SoundManager.Instance.PlayLand();
+        }
+
+        wasGrounded = isGrounded;
     }
+
 
 
     // =========================================================

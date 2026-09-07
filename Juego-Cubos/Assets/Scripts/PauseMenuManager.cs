@@ -126,6 +126,8 @@ public class PauseMenuManager : MonoBehaviour
         {
             playerCamera.SetControlsEnabled(false);
         }
+
+        SoundManager.Instance.PlayPauseOpen();
     }
 
 
@@ -153,6 +155,8 @@ public class PauseMenuManager : MonoBehaviour
         {
             playerCamera.SetControlsEnabled(true);
         }
+
+        SoundManager.Instance.PlayPauseClose();
     }
 
 

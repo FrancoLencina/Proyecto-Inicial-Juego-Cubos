@@ -196,6 +196,8 @@ public class GameManager : MonoBehaviour
         );
 
         ShowResultPanel();
+
+        SoundManager.Instance.PlayWin();
     }
 
     // =========================================================
@@ -218,6 +220,8 @@ public class GameManager : MonoBehaviour
         );
 
         ShowResultPanel();
+
+        SoundManager.Instance.PlayLose();
     }
 
     // =========================================================

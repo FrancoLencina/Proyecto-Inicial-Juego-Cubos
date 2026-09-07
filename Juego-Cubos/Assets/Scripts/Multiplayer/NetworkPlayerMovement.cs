@@ -16,6 +16,11 @@ public class NetworkPlayerMovement : NetworkBehaviour
     public float jumpHoldForce = 15f;
     public float maxJumpTime = 0.4f;
 
+    [Header("Footsteps")]
+public float footstepInterval = 0.4f;
+
+private float footstepTimer;
+
     [Header("Ground Detection")]
     public LayerMask groundLayer;
     public float groundCheckHeight = 1f;
@@ -39,6 +44,7 @@ public class NetworkPlayerMovement : NetworkBehaviour
     private bool isGrounded;
     private bool isJumping;
     private float jumpTime;
+    private bool wasGrounded;
 
     private Vector3 wallNormal;
 
@@ -132,6 +138,25 @@ private void OnDisable()
         if (movement.magnitude > 1f)
             movement.Normalize();
 
+        // =====================================================
+        // FOOTSTEPS
+        // =====================================================
+
+        if (isGrounded && movement.magnitude > 0.1f)
+        {
+            footstepTimer -= Time.deltaTime;
+
+            if (footstepTimer <= 0f)
+            {
+                SoundManager.Instance.PlayFootstep();
+
+                footstepTimer = footstepInterval;
+            }
+        }
+        else
+        {
+            footstepTimer = 0f;
+        }
 
         // =====================================================
         // COMENZAR SALTO
@@ -144,6 +169,8 @@ private void OnDisable()
                 Vector3.up * jumpForce,
                 ForceMode.Impulse
             );
+
+            SoundManager.Instance.PlayJump();
 
             isGrounded = false;
             isJumping = true;
@@ -365,11 +392,14 @@ private void OnDisable()
 
     private void CheckGround()
     {
+        // Guardar el estado anterior.
+        wasGrounded = isGrounded;
+
+
         Vector3 origin =
             transform.position +
             Vector3.up *
             groundCheckHeight;
-
 
         RaycastHit hit;
 
@@ -394,6 +424,17 @@ private void OnDisable()
         else
         {
             isGrounded = false;
+        }
+
+
+        // =====================================================
+        // LANDING SOUND
+        // =====================================================
+
+        if (!wasGrounded &&
+            isGrounded)
+        {
+            SoundManager.Instance.PlayLand();
         }
     }
 
