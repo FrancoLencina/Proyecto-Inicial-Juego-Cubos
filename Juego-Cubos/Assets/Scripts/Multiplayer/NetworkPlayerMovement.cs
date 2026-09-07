@@ -53,6 +53,7 @@ private float footstepTimer;
     private Vector3 wallNormal;
 
     private float pendingRotation;
+    private bool gameEnded;
 
     // Guarda cuándo se envió el último impulso para cada bloque.
     private Dictionary<NetworkObject, float> lastBlockPushTimes =
@@ -118,6 +119,9 @@ private void OnDisable()
     {
         // Seguridad extra.
         if (!IsOwner)
+            return;
+
+        if (gameEnded)
             return;
 
         CheckGround();
@@ -246,6 +250,9 @@ private void OnDisable()
         if (!IsOwner)
             return;
 
+        if (gameEnded)
+            return;
+
         pendingRotation += rotation;
     }
 
@@ -254,6 +261,8 @@ private void OnDisable()
         if (!IsOwner)
             return;
 
+        if (gameEnded)
+            return;
 
         Vector3 velocity =
             rb.linearVelocity;
@@ -500,11 +509,13 @@ private void OnDisable()
     // =========================================================
 
     private void OnCollisionStay(
-        Collision collision)
+    Collision collision)
     {
         if (!IsOwner)
             return;
 
+        if (gameEnded)
+            return;
 
         if (collision == null)
             return;
@@ -784,6 +795,68 @@ private void OnDisable()
 
         Debug.Log(
             "[BODY PUSH SERVER 5] ApplyServerImpulse finalizado"
+        );
+    }
+
+        // =========================================================
+    // CONGELAR AL FINAL DE LA PARTIDA
+    // =========================================================
+
+    public void FreezeForGameEnd()
+    {
+        if (!IsOwner)
+            return;
+
+        gameEnded = true;
+
+        // Detener movimiento físico inmediatamente.
+        if (rb != null)
+        {
+            rb.linearVelocity =
+                Vector3.zero;
+
+            rb.angularVelocity =
+                Vector3.zero;
+        }
+
+        movement =
+            Vector3.zero;
+
+        pendingRotation =
+            0f;
+
+        isJumping =
+            false;
+
+        isSprinting =
+            false;
+
+        footstepTimer =
+            0f;
+
+        // Detener las animaciones de movimiento.
+        if (animator != null)
+        {
+            animator.SetFloat(
+                "VelX",
+                0f
+            );
+
+            animator.SetFloat(
+                "VelY",
+                0f
+            );
+        }
+
+        // Desactivar controles.
+        controls.Disable();
+
+        // Desactivar movimiento.
+        enabled = false;
+
+        Debug.Log(
+            "[NetworkPlayerMovement] " +
+            "Jugador congelado por final de partida."
         );
     }
 }
