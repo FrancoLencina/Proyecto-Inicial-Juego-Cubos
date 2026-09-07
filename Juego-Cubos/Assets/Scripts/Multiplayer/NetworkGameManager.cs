@@ -10,6 +10,16 @@ public class NetworkGameManager : NetworkBehaviour
 
     [SerializeField] private int sequenceLength = 5;
 
+<<<<<<< Updated upstream
+=======
+    [Header("Result")]
+    [SerializeField] private GameObject victoryPanel;
+    [SerializeField] private TMP_Text resultText;
+
+    [Header("Confirmación de victoria")]
+    [SerializeField] private float victoryConfirmDelay = 1f;
+
+>>>>>>> Stashed changes
     private List<FruitData> targetSequence;
 
     private NetworkList<int> networkSequence;
@@ -19,6 +29,16 @@ public class NetworkGameManager : NetworkBehaviour
     private ulong winnerClientId;
 
     private Coroutine sequenceUICoroutine;
+
+    // =====================================================
+    // CONFIRMACIÓN DE VICTORIA PENDIENTE
+    // =====================================================
+
+    private Coroutine pendingVictoryCoroutine;
+
+    private ulong pendingWinnerClientId;
+
+    private bool pendingDidHostWin;
 
     public IReadOnlyList<FruitData> TargetSequence =>
         targetSequence;
@@ -81,6 +101,15 @@ public class NetworkGameManager : NetworkBehaviour
             );
 
             sequenceUICoroutine = null;
+        }
+
+        if (pendingVictoryCoroutine != null)
+        {
+            StopCoroutine(
+                pendingVictoryCoroutine
+            );
+
+            pendingVictoryCoroutine = null;
         }
     }
 
@@ -330,7 +359,7 @@ public class NetworkGameManager : NetworkBehaviour
     }
 
     // =====================================================
-    // FINALIZAR PARTIDA
+    // JUGADOR COMPLETÓ LA SECUENCIA (a confirmar)
     // =====================================================
 
     public void PlayerCompleted(
@@ -343,20 +372,161 @@ public class NetworkGameManager : NetworkBehaviour
         if (gameFinished)
             return;
 
-        gameFinished = true;
+        /*
+         * No declaramos la victoria de inmediato: esperamos
+         * "victoryConfirmDelay" segundos para comprobar que
+         * la pila sigue armada (que no se haya caído) antes
+         * de confirmar el resultado.
+         *
+         * Si ya hay una confirmación pendiente para el mismo
+         * jugador, no hacemos nada. Si es de otro jugador (caso
+         * borde de ambos completando casi al mismo tiempo),
+         * reiniciamos la espera con el nuevo jugador.
+         */
 
-        winnerClientId =
-            clientId;
+        if (
+            pendingVictoryCoroutine != null &&
+            pendingWinnerClientId == clientId
+        )
+        {
+            return;
+        }
+
+        if (pendingVictoryCoroutine != null)
+        {
+            StopCoroutine(
+                pendingVictoryCoroutine
+            );
+
+            pendingVictoryCoroutine = null;
+        }
+
+        pendingWinnerClientId = clientId;
+        pendingDidHostWin = didHostWin;
 
         Debug.Log(
             "[NetworkGameManager] " +
+            "Jugador completó la secuencia, confirmando en " +
+            victoryConfirmDelay +
+            "s: " +
+            clientId
+        );
+
+        pendingVictoryCoroutine =
+            StartCoroutine(
+                ConfirmVictoryAfterDelay(
+                    clientId,
+                    didHostWin
+                )
+            );
+    }
+
+    // =====================================================
+    // CONFIRMAR VICTORIA TRAS LA ESPERA
+    // =====================================================
+
+    private IEnumerator ConfirmVictoryAfterDelay(
+        ulong clientId,
+        bool didHostWin
+    )
+    {
+        yield return new WaitForSeconds(
+            victoryConfirmDelay
+        );
+
+        pendingVictoryCoroutine = null;
+
+        if (gameFinished)
+            yield break;
+
+        gameFinished = true;
+
+        winnerClientId = clientId;
+
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "Victoria confirmada tras la espera. " +
             "JUGADOR GANADOR: " +
             clientId
         );
 
+<<<<<<< Updated upstream
         GameFinishedClientRpc(
             clientId
         );
+=======
+        GameFinishedClientRpc(clientId, didHostWin);
+    }
+
+    // =====================================================
+    // CANCELAR CONFIRMACIÓN PENDIENTE (la pila se cayó)
+    // =====================================================
+
+    /*
+     * Llamar a este método desde el script que detecta la
+     * caída de bloques (por ejemplo NetworkTargetZone) si,
+     * durante la espera de confirmación, detecta que la pila
+     * del jugador "clientId" ya no está armada correctamente.
+     */
+
+    public void CancelPendingCompletion(ulong clientId)
+    {
+        if (!IsServer)
+            return;
+
+        if (pendingVictoryCoroutine == null)
+            return;
+
+        if (pendingWinnerClientId != clientId)
+            return;
+
+        Debug.Log(
+            "[NetworkGameManager] " +
+            "Se canceló la confirmación de victoria " +
+            "(la pila se cayó): " +
+            clientId
+        );
+
+        StopCoroutine(
+            pendingVictoryCoroutine
+        );
+
+        pendingVictoryCoroutine = null;
+    }
+
+
+    // ====================================================
+    // TERMINAR PARTIDA POR EMPATE
+    // ====================================================
+
+    public void TimeRanOut(){
+
+        if (gameFinished)
+            return;
+
+        if (pendingVictoryCoroutine != null)
+        {
+            /*
+             * Alguien ya completó la secuencia y su victoria
+             * se está confirmando (esperando el segundo de
+             * gracia). Dejamos que ese resultado se resuelva
+             * en vez de pisarlo con un empate.
+             */
+
+            Debug.Log(
+                "[NetworkGameManager] " +
+                "Se acabó el tiempo, pero hay una victoria " +
+                "pendiente de confirmar. No se declara empate."
+            );
+
+            return;
+        }
+
+        gameFinished = true;
+
+        SetResultText("empate...", Color.black);
+        ShowResultPanel();
+>>>>>>> Stashed changes
     }
 
     // =====================================================
@@ -430,6 +600,7 @@ public class NetworkGameManager : NetworkBehaviour
             "El jugador local perdió la partida."
         );
 
+<<<<<<< Updated upstream
         /*
          * Acá posteriormente:
          *
@@ -439,5 +610,80 @@ public class NetworkGameManager : NetworkBehaviour
          * - Sonido
          * - Botón volver a jugar
          */
+=======
+        SetResultText("Jugador 2 ha ganado!", Color.green);
+        ShowResultPanel();
+    }
+
+    // ======================
+    // PANEL DE RESULTADOS
+    // ======================
+
+      private void ShowResultPanel()
+    {
+        // Detener gameplay (movimiento, cámara y timer)
+        Time.timeScale = 0f;
+
+        //Detener la rotacion
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+
+        // Mostrar panel
+        if (victoryPanel != null)
+        {
+            victoryPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[GameManager] Victory Panel no está asignado."
+            );
+        }
+
+        // Mostrar y liberar mouse
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+        private void SetResultText(
+        string text,
+        Color color
+    )
+    {
+        if (resultText == null)
+        {
+            Debug.LogWarning(
+                "[GameManager] ResultText no está asignado."
+            );
+
+            return;
+        }
+
+        resultText.text = text;
+        resultText.color = color;
+
+        // Mantener las características visuales
+        resultText.fontSize = 40f;
+        resultText.fontStyle = FontStyles.Bold;
+    }
+
+        public void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+
+        // Apagar Network Manager
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+
+        if (NetworkManager.Singleton.gameObject != null)
+            {
+                Destroy(NetworkManager.Singleton.gameObject);
+            }
+        }
+
+        SceneManager.LoadScene("MainMenuScene");
+>>>>>>> Stashed changes
     }
 }
